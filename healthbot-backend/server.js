@@ -11,6 +11,11 @@ app.use(express.json());
 // Initialize the AI with your hidden key
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
+// 1. Health check route for cloud deployment
+app.get('/', (req, res) => {
+    res.send('HealthBot API is successfully running!');
+});
+
 // Create the route that your frontend will send data to
 app.post('/api/analyze', async (req, res) => {
     try {
@@ -28,18 +33,18 @@ app.post('/api/analyze', async (req, res) => {
         }`;
 
         // Call the Gemini model
-        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+        const model = genAI.getGenerativeModel({ 
+            model: "gemini-2.5-flash",
+            // 2. Pro-Tip: Force the AI to natively output strict JSON
+            generationConfig: { responseMimeType: "application/json" }
+        });
+        
         const result = await model.generateContent(prompt);
         const responseText = result.response.text();
         
-        // Clean the response to ensure it is valid JSON
-        const jsonMatch = responseText.match(/\{[\s\S]*\}/);
-        if (jsonMatch) {
-            const aiData = JSON.parse(jsonMatch[0]);
-            res.json(aiData); // Send the data back to the frontend
-        } else {
-            throw new Error("AI did not return valid JSON");
-        }
+        // 3. Cleanly parse the guaranteed JSON response
+        const aiData = JSON.parse(responseText);
+        res.json(aiData); // Send the data back to the frontend
 
     } catch (error) {
         console.error("Error with AI:", error);
@@ -47,8 +52,8 @@ app.post('/api/analyze', async (req, res) => {
     }
 });
 
-// Start the server
-const PORT = 3000;
+// 4. Dynamic port for Cloud Deployment
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-    console.log(`Server is successfully running on http://localhost:${PORT}`);
+    console.log(`Server is successfully running on port ${PORT}`);
 });
