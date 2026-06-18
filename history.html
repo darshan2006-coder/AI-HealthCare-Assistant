@@ -31,8 +31,7 @@
             </div>
             
             <div class="history-list" id="historyList">
-                <!-- Chat history items will be loaded here -->
-            </div>
+                </div>
             
             <div class="empty-state" id="emptyState" style="display: none;">
                 <div class="empty-icon">📝</div>
@@ -42,7 +41,6 @@
             </div>
         </div>
         
-        <!-- Chat Detail Modal -->
         <div class="modal" id="chatModal" style="display: none;">
             <div class="modal-content">
                 <div class="modal-header">
@@ -50,8 +48,7 @@
                     <button class="modal-close" id="modalClose">&times;</button>
                 </div>
                 <div class="modal-body" id="modalBody">
-                    <!-- Chat messages will be loaded here -->
-                </div>
+                    </div>
                 <div class="modal-footer">
                     <button id="deleteChatBtn" class="btn-danger">Delete Chat</button>
                     <button id="continueChatBtn" class="btn-primary">Continue Chat</button>
@@ -75,15 +72,26 @@
             document.getElementById('continueChatBtn').addEventListener('click', continueChat);
         });
         
+        // Formats the text so saved chats look exactly like live chats
+        function formatMessageContent(content) {
+            content = content.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+            content = content.replace(/\n/g, '<br>');
+            content = content.replace(/•\s/g, '<span style="color: #2c5aa0;">•</span> ');
+            content = content.replace(/⚠️/g, '<span style="color: #dc3545;">⚠️</span>');
+            content = content.replace(/🚨/g, '<span style="color: #dc3545;">🚨</span>');
+            content = content.replace(/💡/g, '<span style="color: #28a745;">💡</span>');
+            return content;
+        }
+        
         function loadChatHistory() {
-            const user = JSON.parse(localStorage.getItem('currentUser'));
+            const user = authUtils.getCurrentUser();
             if (!user) return;
             
-            const chats = JSON.parse(localStorage.getItem(`chats_${user.email}`)) || [];
+            const chats = storageUtils.getUserChats(user.email);
             const historyList = document.getElementById('historyList');
             const emptyState = document.getElementById('emptyState');
             
-            if (chats.length === 0) {
+            if (!chats || chats.length === 0) {
                 emptyState.style.display = 'block';
                 historyList.innerHTML = '';
                 return;
@@ -105,10 +113,7 @@
         }
         
         function openChatModal(chatId) {
-            const user = JSON.parse(localStorage.getItem('currentUser'));
-            const chats = JSON.parse(localStorage.getItem(`chats_${user.email}`)) || [];
-            const chat = chats.find(c => c.id === chatId);
-            
+            const chat = storageUtils.getChatById(chatId);
             if (!chat) return;
             
             currentChatId = chatId;
@@ -118,7 +123,7 @@
                 <div class="message ${msg.sender === 'user' ? 'user-message' : 'bot-message'}">
                     <div class="message-avatar">${msg.sender === 'user' ? '👤' : '🤖'}</div>
                     <div class="message-content">
-                        <p>${msg.content}</p>
+                        <p>${formatMessageContent(msg.content)}</p>
                         <small class="message-time">${new Date(msg.timestamp).toLocaleTimeString()}</small>
                     </div>
                 </div>
@@ -135,11 +140,7 @@
         function deleteChat() {
             if (!currentChatId) return;
             
-            const user = JSON.parse(localStorage.getItem('currentUser'));
-            let chats = JSON.parse(localStorage.getItem(`chats_${user.email}`)) || [];
-            
-            chats = chats.filter(chat => chat.id !== currentChatId);
-            localStorage.setItem(`chats_${user.email}`, JSON.stringify(chats));
+            storageUtils.deleteChat(currentChatId);
             
             closeModal();
             loadChatHistory();
@@ -154,8 +155,7 @@
         
         function clearAllHistory() {
             if (confirm('Are you sure you want to delete all chat history? This action cannot be undone.')) {
-                const user = JSON.parse(localStorage.getItem('currentUser'));
-                localStorage.removeItem(`chats_${user.email}`);
+                storageUtils.clearAllChats();
                 loadChatHistory();
             }
         }
