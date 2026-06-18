@@ -21,12 +21,9 @@ function initializeChat() {
         return;
     }
     
-    
     currentMessages = [];
     
-   
     addMessage('bot', getWelcomeMessage(user), true);
-    
     
     const quickSymptom = localStorage.getItem('quickSymptom');
     if (quickSymptom) {
@@ -36,7 +33,6 @@ function initializeChat() {
             handleUserMessage(symptomMessage);
         }, 1000);
     }
-    
     
     const continueChatId = localStorage.getItem('continueChatId');
     if (continueChatId) {
@@ -48,8 +44,16 @@ function initializeChat() {
 function setupEventListeners() {
     const messageInput = document.getElementById('messageInput');
     const sendBtn = document.getElementById('sendBtn');
-    const newChatBtn = document.getElementById('newChatBtn');
     const saveChatBtn = document.getElementById('saveChatBtn');
+    
+    // Connect the top navbar "New Chat" link directly to the reset engine
+    const navNewChatLink = document.querySelector('.nav-menu a[href="chat.html"]');
+    if (navNewChatLink) {
+        navNewChatLink.addEventListener('click', function(e) {
+            e.preventDefault(); // Stop page reload
+            startNewChat();
+        });
+    }
     
     if (messageInput) {
         messageInput.addEventListener('keypress', function(e) {
@@ -66,10 +70,6 @@ function setupEventListeners() {
     
     if (sendBtn) {
         sendBtn.addEventListener('click', sendMessage);
-    }
-    
-    if (newChatBtn) {
-        newChatBtn.addEventListener('click', startNewChat);
     }
     
     if (saveChatBtn) {
@@ -89,14 +89,12 @@ function sendMessage() {
     handleUserMessage(message);
 }
 
-// We added the 'async' keyword here
 async function handleUserMessage(message) {
     addMessage('user', message);
     
     showTypingIndicator();
     
     try {
-        // We use 'await' to pause the chat until your backend server answers
         const aiResponse = await generateAIResponse(message);
         
         hideTypingIndicator();
@@ -129,7 +127,6 @@ function addMessage(sender, content, skipSave = false) {
     chatMessages.appendChild(messageDiv);
     chatMessages.scrollTop = chatMessages.scrollHeight;
     
-    
     if (!skipSave) {
         currentMessages.push({
             sender,
@@ -138,18 +135,16 @@ function addMessage(sender, content, skipSave = false) {
         });
     }
     
-    
     updateSaveButtonState();
 }
 
 function formatMessageContent(content) {
+    // Convert markdown bold (**text**) into clean HTML tags for beautiful AI text presentation
+    content = content.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
     
     content = content.replace(/\n/g, '<br>');
-    
-    
     content = content.replace(/•\s/g, '<span style="color: #2c5aa0;">•</span> ');
     
-   
     content = content.replace(/⚠️/g, '<span style="color: #dc3545;">⚠️</span>');
     content = content.replace(/🚨/g, '<span style="color: #dc3545;">🚨</span>');
     content = content.replace(/💡/g, '<span style="color: #28a745;">💡</span>');
@@ -180,7 +175,6 @@ function showTypingIndicator() {
     chatMessages.appendChild(typingDiv);
     chatMessages.scrollTop = chatMessages.scrollHeight;
     
-   
     const style = document.createElement('style');
     style.textContent = `
         .typing-dots {
@@ -218,7 +212,13 @@ function hideTypingIndicator() {
 }
 
 function startNewChat() {
-     console.log("Start New Chat Clicked");
+    console.log("Start New Chat Clicked");
+
+    if (currentMessages.length > 1) { 
+        if (!confirm('Are you sure you want to start a new chat? Unsaved messages will be lost.')) {
+            return;
+        }
+    }
 
     clearConversationState();
     resetTemperature();
@@ -226,33 +226,21 @@ function startNewChat() {
     resetUserSeverity();
 
     console.log("Reset Functions Called");
-
-    if (currentMessages.length > 1) { 
-        if (!confirm('Are you sure you want to start a new chat? Unsaved messages will be lost.')) {
-            return;
-        }
-    }
-    
     
     currentChatId = null;
     currentMessages = [];
     
-    
     const chatMessages = document.getElementById('chatMessages');
     chatMessages.innerHTML = '';
-    
     
     const user = authUtils.getCurrentUser();
     addMessage('bot', getWelcomeMessage(user), true);
     
-    
     storageUtils.clearCurrentChatSession();
-    
-    
     updateSaveButtonState();
     
-    
-    document.getElementById('messageInput').focus();
+    const messageInput = document.getElementById('messageInput');
+    if (messageInput) messageInput.focus();
 }
 
 function saveCurrentChat() {
@@ -285,7 +273,6 @@ function loadExistingChat(chatId) {
     currentChatId = chatId;
     currentMessages = [...chat.messages];
     
-    
     const chatMessages = document.getElementById('chatMessages');
     chatMessages.innerHTML = '';
     
@@ -300,7 +287,6 @@ function loadChatSession() {
     const session = storageUtils.getCurrentChatSession();
 
     if (session && session.messages && session.messages.length > 1) {
-
         currentMessages = [...session.messages];
 
         const chatMessages = document.getElementById('chatMessages');
@@ -356,13 +342,11 @@ function getTimeOfDay() {
     return 'evening';
 }
 
-
 setInterval(() => {
     if (currentMessages.length > 1) {
         storageUtils.saveCurrentChatSession(currentMessages);
     }
 }, 30000); 
-
 
 window.chatUtils = {
     addMessage,
