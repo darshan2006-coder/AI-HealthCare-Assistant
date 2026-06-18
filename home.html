@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - HealthBot</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="dark-theme.css">
+    <link rel="stylesheet" href="responsive.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-brand">
+            <h2>HealthBot</h2>
+        </div>
+        <div class="nav-menu">
+            <a href="home.html" class="nav-link active">Home</a>
+            <a href="chat.html" class="nav-link">New Chat</a>
+            <a href="history.html" class="nav-link">Chat History</a>
+            <a href="about.html" class="nav-link">About</a>
+            <button id="themeToggle" class="theme-btn">🌙</button>
+            <button id="logoutBtn" class="logout-btn">Logout</button>
+        </div>
+    </nav>
+    
+    <div class="container">
+        <div class="dashboard">
+            <div class="welcome-section">
+                <h1>Welcome , <span id="userName">User</span></h1>
+                <p>How can I help you with your health today?</p>
+            </div>
+            
+            <div class="dashboard-cards">
+                <div class="card">
+                    <div class="card-icon">💬</div>
+                    <h3>Start New Chat</h3>
+                    <p>Begin a conversation with our AI healthcare assistant</p>
+                    <a href="chat.html" class="btn-secondary">Start Chat</a>
+                </div>
+                
+                <div class="card">
+                    <div class="card-icon">📋</div>
+                    <h3>Chat History</h3>
+                    <p>View your previous conversations and health consultations</p>
+                    <a href="history.html" class="btn-secondary">View History</a>
+                </div>
+                
+                <div class="card">
+                    <div class="card-icon">ℹ️</div>
+                    <h3>About HealthBot</h3>
+                    <p>Learn more about our AI healthcare assistant</p>
+                    <a href="about.html" class="btn-secondary">Learn More</a>
+                </div>
+            </div>
+            
+
+            <div class="quick-symptoms">
+                <h3>Quick Symptom Check</h3>
+                <div class="symptom-buttons">
+                    <button class="symptom-btn" data-symptom="fever">Fever</button>
+                    <button class="symptom-btn" data-symptom="headache">Headache</button>
+                    <button class="symptom-btn" data-symptom="cough">Cough</button>
+                    <button class="symptom-btn" data-symptom="fatigue">Fatigue</button>
+                    <button class="symptom-btn" data-symptom="nausea">Nausea</button>
+                    <button class="symptom-btn" data-symptom="chest_pain">Chest Pain</button>
+                    <button class="symptom-btn" data-symptom="itching">Itching</button>
+                    <button class="symptom-btn" data-symptom="skin_rash">skin_rash</button>
+                    <button class="symptom-btn" data-symptom="continuous_sneezing">continuous sneezing</button>
+                    <button class="symptom-btn" data-symptom="shivering">shivering</button>
+                    <button class="symptom-btn" data-symptom="chills">chills</button>
+                    <button class="symptom-btn" data-symptom="vomiting">vomiting</button>
+                    <button class="symptom-btn" data-symptom="abdominal_pain">abdominal pain</button>
+                    <button class="symptom-btn" data-symptom="runny_nose">Runny nose</button>
+                    <button class="symptom-btn" data-symptom="congestion">congestion</button>
+                    <button class="symptom-btn" data-symptom="knee_pain">Knee Pain</button>
+                    <button class="symptom-btn" data-symptom="muscle_weakness">Muscle Weakness</button>
+                    <button class="symptom-btn" data-symptom="depression">Depression</button>
+                    <button class="symptom-btn" data-symptom="loss_of_balance">Loss of balance</button>
+                    <button class="symptom-btn" data-symptom="irritability">Irritability</button>
+                    <button class="symptom-btn" data-symptom="Stomach pain">stomach pain</button>
+                    <button class="symptom-btn" data-symptom="Eye irritation ">Eye irritation</button>
+                    <button class="symptom-btn" data-symptom="Cold">Cold</button>
+                </div>
+
+
+
+
+
+
+            
+            </div>
+        </div>
+    </div>
+    
+    <script src="auth.js"></script>
+    <script src="theme.js"></script>
+    <script src="storage.js"></script>
+    <script>
+       
+        document.addEventListener('DOMContentLoaded', function() {
+            const user = JSON.parse(localStorage.getItem('currentUser'));
+            if (user) {
+                document.getElementById('userName').textContent = user.fullName;
+            }
+            
+            
+            document.querySelectorAll('.symptom-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const symptom = this.dataset.symptom;
+                    localStorage.setItem('quickSymptom', symptom);
+                    window.location.href = 'chat.html';
+                });
+            });
+        });
+    </script>
+</body>
+</html>

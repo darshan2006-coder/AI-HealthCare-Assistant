@@ -1,0 +1,5 @@
+node_modules/
+healthbot-backend/node_modules/
+
+.env
+healthbot-backend/.env

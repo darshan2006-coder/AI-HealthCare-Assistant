@@ -1,0 +1,319 @@
+@media (max-width: 768px) {
+    .container {
+        padding: 15px;
+    }
+    
+    .navbar {
+        padding: 1rem;
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .nav-menu {
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 1rem;
+    }
+    
+    .login-card,
+    .register-card {
+        margin: 1rem auto;
+        padding: 1.5rem;
+    }
+    
+    .header h1 {
+        font-size: 2rem;
+    }
+    
+    .welcome-section h1 {
+        font-size: 2rem;
+    }
+    
+    .dashboard-cards {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+    
+    .chat-container {
+        height: 70vh;
+    }
+    
+    .message {
+        max-width: 90%;
+    }
+    
+    .input-group {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .features-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .symptoms-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .modal-content {
+        width: 95%;
+        margin: 1rem;
+    }
+    
+    .history-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+    
+    .step {
+        flex-direction: column;
+        text-align: center;
+    }
+}
+
+
+@media (max-width: 480px) {
+    .container {
+        padding: 10px;
+    }
+    
+    .navbar {
+        padding: 0.5rem;
+    }
+    
+    .nav-menu {
+        gap: 0.5rem;
+    }
+    
+    .nav-link {
+        padding: 0.25rem 0.5rem;
+        font-size: 14px;
+    }
+    
+    .login-card,
+    .register-card {
+        padding: 1rem;
+        margin: 0.5rem auto;
+    }
+    
+    .header h1 {
+        font-size: 1.8rem;
+    }
+    
+    .welcome-section h1 {
+        font-size: 1.8rem;
+    }
+    
+    .welcome-section p {
+        font-size: 1rem;
+    }
+    
+    .card {
+        padding: 1.5rem;
+    }
+    
+    .card h3 {
+        font-size: 1.2rem;
+    }
+    
+    .symptom-buttons {
+        gap: 0.5rem;
+    }
+    
+    .symptom-btn {
+        padding: 8px 16px;
+        font-size: 14px;
+    }
+    
+    .chat-container {
+        height: 60vh;
+    }
+    
+    .chat-header {
+        padding: 1rem;
+        flex-direction: column;
+        gap: 1rem;
+        align-items: flex-start;
+    }
+    
+    .chat-actions {
+        width: 100%;
+        justify-content: space-between;
+    }
+    
+    .message-avatar {
+        width: 30px;
+        height: 30px;
+        font-size: 1rem;
+    }
+    
+    .message-content {
+        padding: 0.75rem;
+        font-size: 14px;
+    }
+    
+    .chat-input-container {
+        padding: 1rem;
+    }
+    
+    .input-group input {
+        font-size: 14px;
+    }
+    
+    .send-btn {
+        padding: 10px 20px;
+        font-size: 14px;
+    }
+    
+    .history-header {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: flex-start;
+    }
+    
+    .history-item {
+        padding: 1rem;
+    }
+    
+    .modal-content {
+        width: 98%;
+        max-height: 90vh;
+    }
+    
+    .modal-header,
+    .modal-footer {
+        padding: 1rem;
+    }
+    
+    .modal-footer {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .about-header h1 {
+        font-size: 2rem;
+    }
+    
+    .about-content {
+        padding: 1.5rem;
+    }
+    
+    .about-section h2 {
+        font-size: 1.5rem;
+    }
+    
+    .feature-item {
+        padding: 1rem;
+    }
+    
+    .btn-primary,
+    .btn-secondary,
+    .btn-danger {
+        width: 100%;
+        text-align: center;
+    }
+}
+
+
+@media (max-width: 320px) {
+    .container {
+        padding: 5px;
+    }
+    
+    .login-card,
+    .register-card {
+        padding: 0.75rem;
+    }
+    
+    .header h1 {
+        font-size: 1.5rem;
+    }
+    
+    .welcome-section h1 {
+        font-size: 1.5rem;
+    }
+    
+    .card {
+        padding: 1rem;
+    }
+    
+    .chat-container {
+        height: 55vh;
+    }
+    
+    .message {
+        max-width: 95%;
+    }
+    
+    .about-content {
+        padding: 1rem;
+    }
+}
+
+
+@media (max-height: 500px) and (orientation: landscape) {
+    .chat-container {
+        height: 50vh;
+    }
+    
+    .navbar {
+        padding: 0.5rem;
+    }
+    
+    .welcome-section {
+        margin-bottom: 1.5rem;
+    }
+    
+    .dashboard-cards {
+        margin-bottom: 1.5rem;
+    }
+}
+
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+    .card,
+    .login-card,
+    .register-card,
+    .chat-container,
+    .history-item {
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    body.dark-theme .card,
+    body.dark-theme .login-card,
+    body.dark-theme .register-card,
+    body.dark-theme .chat-container,
+    body.dark-theme .history-item {
+        box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    }
+}
+
+
+@media print {
+    .navbar,
+    .theme-toggle,
+    .chat-input-container,
+    .chat-actions,
+    .modal,
+    .btn-primary,
+    .btn-secondary,
+    .btn-danger {
+        display: none !important;
+    }
+    
+    body {
+        background: white !important;
+        color: black !important;
+    }
+    
+    .container {
+        max-width: none;
+        padding: 0;
+    }
+    
+    .chat-container {
+        height: auto;
+        box-shadow: none;
+        border: 1px solid #ccc;
+    }
+}

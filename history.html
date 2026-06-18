@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat History - HealthBot</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="dark-theme.css">
+    <link rel="stylesheet" href="responsive.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-brand">
+            <h2>HealthBot</h2>
+        </div>
+        <div class="nav-menu">
+            <a href="home.html" class="nav-link">Home</a>
+            <a href="chat.html" class="nav-link">New Chat</a>
+            <a href="history.html" class="nav-link active">Chat History</a>
+            <a href="about.html" class="nav-link">About</a>
+            <button id="themeToggle" class="theme-btn">🌙</button>
+            <button id="logoutBtn" class="logout-btn">Logout</button>
+        </div>
+    </nav>
+    
+    <div class="container">
+        <div class="history-container">
+            <div class="history-header">
+                <h2>Chat History</h2>
+                <button id="clearAllBtn" class="btn-danger">Clear All</button>
+            </div>
+            
+            <div class="history-list" id="historyList">
+                <!-- Chat history items will be loaded here -->
+            </div>
+            
+            <div class="empty-state" id="emptyState" style="display: none;">
+                <div class="empty-icon">📝</div>
+                <h3>No chat history yet</h3>
+                <p>Start a conversation with our AI healthcare assistant to see your chat history here.</p>
+                <a href="chat.html" class="btn-primary">Start New Chat</a>
+            </div>
+        </div>
+        
+        <!-- Chat Detail Modal -->
+        <div class="modal" id="chatModal" style="display: none;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Chat Details</h3>
+                    <button class="modal-close" id="modalClose">&times;</button>
+                </div>
+                <div class="modal-body" id="modalBody">
+                    <!-- Chat messages will be loaded here -->
+                </div>
+                <div class="modal-footer">
+                    <button id="deleteChatBtn" class="btn-danger">Delete Chat</button>
+                    <button id="continueChatBtn" class="btn-primary">Continue Chat</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="auth.js"></script>
+    <script src="theme.js"></script>
+    <script src="storage.js"></script>
+    <script>
+        let currentChatId = null;
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            loadChatHistory();
+            
+            document.getElementById('clearAllBtn').addEventListener('click', clearAllHistory);
+            document.getElementById('modalClose').addEventListener('click', closeModal);
+            document.getElementById('deleteChatBtn').addEventListener('click', deleteChat);
+            document.getElementById('continueChatBtn').addEventListener('click', continueChat);
+        });
+        
+        function loadChatHistory() {
+            const user = JSON.parse(localStorage.getItem('currentUser'));
+            if (!user) return;
+            
+            const chats = JSON.parse(localStorage.getItem(`chats_${user.email}`)) || [];
+            const historyList = document.getElementById('historyList');
+            const emptyState = document.getElementById('emptyState');
+            
+            if (chats.length === 0) {
+                emptyState.style.display = 'block';
+                historyList.innerHTML = '';
+                return;
+            }
+            
+            emptyState.style.display = 'none';
+            historyList.innerHTML = chats.map(chat => `
+                <div class="history-item" onclick="openChatModal('${chat.id}')">
+                    <div class="history-info">
+                        <h4>${chat.title}</h4>
+                        <p>${chat.preview}</p>
+                        <small>${new Date(chat.timestamp).toLocaleString()}</small>
+                    </div>
+                    <div class="history-actions">
+                        <span class="message-count">${chat.messages.length} messages</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        function openChatModal(chatId) {
+            const user = JSON.parse(localStorage.getItem('currentUser'));
+            const chats = JSON.parse(localStorage.getItem(`chats_${user.email}`)) || [];
+            const chat = chats.find(c => c.id === chatId);
+            
+            if (!chat) return;
+            
+            currentChatId = chatId;
+            const modalBody = document.getElementById('modalBody');
+            
+            modalBody.innerHTML = chat.messages.map(msg => `
+                <div class="message ${msg.sender === 'user' ? 'user-message' : 'bot-message'}">
+                    <div class="message-avatar">${msg.sender === 'user' ? '👤' : '🤖'}</div>
+                    <div class="message-content">
+                        <p>${msg.content}</p>
+                        <small class="message-time">${new Date(msg.timestamp).toLocaleTimeString()}</small>
+                    </div>
+                </div>
+            `).join('');
+            
+            document.getElementById('chatModal').style.display = 'flex';
+        }
+        
+        function closeModal() {
+            document.getElementById('chatModal').style.display = 'none';
+            currentChatId = null;
+        }
+        
+        function deleteChat() {
+            if (!currentChatId) return;
+            
+            const user = JSON.parse(localStorage.getItem('currentUser'));
+            let chats = JSON.parse(localStorage.getItem(`chats_${user.email}`)) || [];
+            
+            chats = chats.filter(chat => chat.id !== currentChatId);
+            localStorage.setItem(`chats_${user.email}`, JSON.stringify(chats));
+            
+            closeModal();
+            loadChatHistory();
+        }
+        
+        function continueChat() {
+            if (!currentChatId) return;
+            
+            localStorage.setItem('continueChatId', currentChatId);
+            window.location.href = 'chat.html';
+        }
+        
+        function clearAllHistory() {
+            if (confirm('Are you sure you want to delete all chat history? This action cannot be undone.')) {
+                const user = JSON.parse(localStorage.getItem('currentUser'));
+                localStorage.removeItem(`chats_${user.email}`);
+                loadChatHistory();
+            }
+        }
+    </script>
+</body>
+</html>

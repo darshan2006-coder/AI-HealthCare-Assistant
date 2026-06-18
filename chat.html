@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat - HealthBot</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="dark-theme.css">
+    <link rel="stylesheet" href="responsive.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-brand">
+            <h2>HealthBot</h2>
+        </div>
+        <div class="nav-menu">
+            <a href="home.html" class="nav-link">Home</a>
+            <a href="chat.html" class="nav-link active">New Chat</a>
+            <a href="history.html" class="nav-link">Chat History</a>
+            <a href="about.html" class="nav-link">About</a>
+            <button id="themeToggle" class="theme-btn">🌙</button>
+            <button id="logoutBtn" class="logout-btn">Logout</button>
+        </div>
+    </nav>
+    
+    <div class="container">
+        <div class="chat-container">
+            <div class="chat-header">
+                <h2>AI Healthcare Assistant</h2>
+                <div class="chat-actions">
+                    <button id="newChatBtn" class="btn-secondary">New Chat</button>
+                    <button id="saveChatBtn" class="btn-primary">Save Chat</button>
+                </div>
+            </div>
+            
+            <div class="chat-messages" id="chatMessages">
+                <div class="message bot-message">
+                    <div class="message-avatar">🤖</div>
+                    <div class="message-content">
+                        <p>Hello! I'm your AI healthcare assistant. I can help you understand symptoms and provide general health information. Please describe your symptoms or health concerns.</p>
+                        <small class="message-time"></small>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="chat-input-container">
+                <div class="input-group">
+                    <input type="text" id="messageInput" placeholder="Describe your symptoms or ask a health question..." maxlength="500">
+                    <button id="sendBtn" class="send-btn">Send</button>
+                </div>
+                <div class="input-info">
+                    <small>Press Enter to send • This is for informational purposes only</small>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="auth.js"></script>
+    <script src="theme.js"></script>
+    <script src="storage.js"></script>
+    <script type="module" src="js/chat.js"></script>
+
+    <div id="warningModal" class="warning-modal">
+    <div class="warning-content">
+        <h3 id="warningTitle">⚠ Warning</h3>
+
+        <p id="warningText"></p>
+
+        <button id="warningOkBtn">
+            OK
+        </button>
+    </div>
+</div>
+    
+</body>
+</html>
