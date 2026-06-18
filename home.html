@@ -26,7 +26,7 @@
     <div class="container">
         <div class="dashboard">
             <div class="welcome-section">
-                <h1>Welcome , <span id="userName">User</span></h1>
+                <h1>Welcome, <span id="userName">User</span></h1>
                 <p>How can I help you with your health today?</p>
             </div>
             
@@ -53,7 +53,6 @@
                 </div>
             </div>
             
-
             <div class="quick-symptoms">
                 <h3>Quick Symptom Check</h3>
                 <div class="symptom-buttons">
@@ -64,30 +63,23 @@
                     <button class="symptom-btn" data-symptom="nausea">Nausea</button>
                     <button class="symptom-btn" data-symptom="chest_pain">Chest Pain</button>
                     <button class="symptom-btn" data-symptom="itching">Itching</button>
-                    <button class="symptom-btn" data-symptom="skin_rash">skin_rash</button>
-                    <button class="symptom-btn" data-symptom="continuous_sneezing">continuous sneezing</button>
-                    <button class="symptom-btn" data-symptom="shivering">shivering</button>
-                    <button class="symptom-btn" data-symptom="chills">chills</button>
-                    <button class="symptom-btn" data-symptom="vomiting">vomiting</button>
-                    <button class="symptom-btn" data-symptom="abdominal_pain">abdominal pain</button>
-                    <button class="symptom-btn" data-symptom="runny_nose">Runny nose</button>
-                    <button class="symptom-btn" data-symptom="congestion">congestion</button>
+                    <button class="symptom-btn" data-symptom="skin_rash">Skin Rash</button>
+                    <button class="symptom-btn" data-symptom="continuous_sneezing">Continuous Sneezing</button>
+                    <button class="symptom-btn" data-symptom="shivering">Shivering</button>
+                    <button class="symptom-btn" data-symptom="chills">Chills</button>
+                    <button class="symptom-btn" data-symptom="vomiting">Vomiting</button>
+                    <button class="symptom-btn" data-symptom="abdominal_pain">Abdominal Pain</button>
+                    <button class="symptom-btn" data-symptom="runny_nose">Runny Nose</button>
+                    <button class="symptom-btn" data-symptom="congestion">Congestion</button>
                     <button class="symptom-btn" data-symptom="knee_pain">Knee Pain</button>
                     <button class="symptom-btn" data-symptom="muscle_weakness">Muscle Weakness</button>
                     <button class="symptom-btn" data-symptom="depression">Depression</button>
-                    <button class="symptom-btn" data-symptom="loss_of_balance">Loss of balance</button>
+                    <button class="symptom-btn" data-symptom="loss_of_balance">Loss of Balance</button>
                     <button class="symptom-btn" data-symptom="irritability">Irritability</button>
-                    <button class="symptom-btn" data-symptom="Stomach pain">stomach pain</button>
-                    <button class="symptom-btn" data-symptom="Eye irritation ">Eye irritation</button>
+                    <button class="symptom-btn" data-symptom="Stomach pain">Stomach Pain</button>
+                    <button class="symptom-btn" data-symptom="Eye irritation ">Eye Irritation</button>
                     <button class="symptom-btn" data-symptom="Cold">Cold</button>
                 </div>
-
-
-
-
-
-
-            
             </div>
         </div>
     </div>
@@ -96,13 +88,11 @@
     <script src="theme.js"></script>
     <script src="storage.js"></script>
     <script>
-       
         document.addEventListener('DOMContentLoaded', function() {
             const user = JSON.parse(localStorage.getItem('currentUser'));
             if (user) {
                 document.getElementById('userName').textContent = user.fullName;
             }
-            
             
             document.querySelectorAll('.symptom-btn').forEach(btn => {
                 btn.addEventListener('click', function() {

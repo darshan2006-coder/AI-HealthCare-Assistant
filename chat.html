@@ -28,7 +28,7 @@
             <div class="chat-header">
                 <h2>AI Healthcare Assistant</h2>
                 <div class="chat-actions">
-                    <button id="newChatBtn" class="btn-secondary">New Chat</button>
+                    <!-- Redundant 'New Chat' button removed -->
                     <button id="saveChatBtn" class="btn-primary">Save Chat</button>
                 </div>
             </div>
@@ -61,16 +61,14 @@
     <script type="module" src="js/chat.js"></script>
 
     <div id="warningModal" class="warning-modal">
-    <div class="warning-content">
-        <h3 id="warningTitle">⚠ Warning</h3>
-
-        <p id="warningText"></p>
-
-        <button id="warningOkBtn">
-            OK
-        </button>
+        <div class="warning-content">
+            <h3 id="warningTitle">⚠ Warning</h3>
+            <p id="warningText"></p>
+            <button id="warningOkBtn">
+                OK
+            </button>
+        </div>
     </div>
-</div>
     
 </body>
 </html>
