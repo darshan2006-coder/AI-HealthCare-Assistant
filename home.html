@@ -35,7 +35,7 @@
                     <div class="card-icon">💬</div>
                     <h3>Start New Chat</h3>
                     <p>Begin a conversation with our AI healthcare assistant</p>
-                    <a href="chat.html" class="btn-secondary">Start Chat</a>
+                    <a href="#" id="homeStartChatBtn" class="btn-secondary">Start Chat</a>
                 </div>
                 
                 <div class="card">
@@ -92,6 +92,16 @@
             const user = JSON.parse(localStorage.getItem('currentUser'));
             if (user) {
                 document.getElementById('userName').textContent = user.fullName;
+            }
+            
+            // UPDATED: Listen for the Start Chat card click and set the flag
+            const homeStartChatBtn = document.getElementById('homeStartChatBtn');
+            if(homeStartChatBtn) {
+                homeStartChatBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    localStorage.setItem('forceNewChat', 'true'); // <--- The magic signal
+                    window.location.href = 'chat.html';
+                });
             }
             
             document.querySelectorAll('.symptom-btn').forEach(btn => {

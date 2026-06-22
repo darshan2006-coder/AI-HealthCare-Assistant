@@ -1,19 +1,15 @@
 document.addEventListener('DOMContentLoaded', function() {
-   
     checkAuthStatus();
     
-   
     const loginForm = document.getElementById('loginForm');
     if (loginForm) {
         loginForm.addEventListener('submit', handleLogin);
     }
     
-    
     const registerForm = document.getElementById('registerForm');
     if (registerForm) {
         registerForm.addEventListener('submit', handleRegister);
     }
-    
     
     const logoutBtn = document.getElementById('logoutBtn');
     if (logoutBtn) {
@@ -26,10 +22,8 @@ function checkAuthStatus() {
     const currentPage = window.location.pathname.split('/').pop();
     
     if (currentUser && (currentPage === 'index.html' || currentPage === 'register.html' || currentPage === '')) {
-        
         window.location.href = 'home.html';
     } else if (!currentUser && currentPage !== 'index.html' && currentPage !== 'register.html' && currentPage !== '') {
-       
         window.location.href = 'index.html';
     }
 }
@@ -39,7 +33,6 @@ function handleLogin(e) {
     
     const email = document.getElementById('email').value.trim();
     const password = document.getElementById('password').value;
-    
     
     if (!email || !password) {
         showMessage('Please fill in all fields', 'error');
@@ -51,14 +44,10 @@ function handleLogin(e) {
         return;
     }
     
-    
     const users = JSON.parse(localStorage.getItem('users')) || [];
-    
-   
     const user = users.find(u => u.email === email && u.password === password);
     
     if (user) {
-       
         localStorage.setItem('currentUser', JSON.stringify(user));
         showMessage('Login successful! Redirecting...', 'success');
         
@@ -79,7 +68,6 @@ function handleRegister(e) {
     const gender = document.getElementById('gender').value;
     const password = document.getElementById('password').value;
     const confirmPassword = document.getElementById('confirmPassword').value;
-    
     
     if (!fullName || !email || !age || !gender || !password || !confirmPassword) {
         showMessage('Please fill in all fields', 'error');
@@ -106,15 +94,12 @@ function handleRegister(e) {
         return;
     }
     
-    
     const users = JSON.parse(localStorage.getItem('users')) || [];
     
-   
     if (users.find(u => u.email === email)) {
         showMessage('An account with this email already exists', 'error');
         return;
     }
-    
     
     const newUser = {
         id: Date.now().toString(),
@@ -125,7 +110,6 @@ function handleRegister(e) {
         password,
         registeredAt: new Date().toISOString()
     };
-    
     
     users.push(newUser);
     localStorage.setItem('users', JSON.stringify(users));
@@ -151,17 +135,14 @@ function isValidEmail(email) {
 }
 
 function showMessage(message, type) {
-    
     const existingMessage = document.querySelector('.auth-message');
     if (existingMessage) {
         existingMessage.remove();
     }
     
-    
     const messageDiv = document.createElement('div');
     messageDiv.className = `auth-message ${type}`;
     messageDiv.textContent = message;
-    
     
     messageDiv.style.cssText = `
         position: fixed;
@@ -176,7 +157,6 @@ function showMessage(message, type) {
         ${type === 'success' ? 'background-color: #28a745;' : 'background-color: #dc3545;'}
     `;
     
-    
     const style = document.createElement('style');
     style.textContent = `
         @keyframes slideIn {
@@ -185,10 +165,7 @@ function showMessage(message, type) {
         }
     `;
     document.head.appendChild(style);
-    
-   
     document.body.appendChild(messageDiv);
-    
     
     setTimeout(() => {
         if (messageDiv.parentNode) {
@@ -196,7 +173,6 @@ function showMessage(message, type) {
         }
     }, 3000);
 }
-
 
 window.authUtils = {
     getCurrentUser: () => JSON.parse(localStorage.getItem('currentUser')),

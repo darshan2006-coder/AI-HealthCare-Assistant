@@ -9,14 +9,26 @@ let currentMessages = [];
 let isTyping = false;
 
 document.addEventListener('DOMContentLoaded', function() {
+   
+    if (localStorage.getItem('forceNewChat') === 'true') {
+        localStorage.removeItem('forceNewChat');
+        if(typeof storageUtils !== 'undefined') {
+            storageUtils.clearCurrentChatSession();
+        }
+        clearConversationState();
+        resetTemperature();
+        resetQuestionState();
+        resetUserSeverity();
+    }
     initializeChat();
     setupEventListeners();
     loadChatSession();
 });
 
 function initializeChat() {
-    const user = authUtils.getCurrentUser();
-    if (!user) {
+    // Assuming authUtils is globally available as in your original setup
+    const user = typeof authUtils !== 'undefined' ? authUtils.getCurrentUser() : { fullName: "User" };
+    if (!user && typeof authUtils !== 'undefined') {
         window.location.href = 'index.html';
         return;
     }
@@ -28,8 +40,15 @@ function initializeChat() {
     const quickSymptom = localStorage.getItem('quickSymptom');
     if (quickSymptom) {
         localStorage.removeItem('quickSymptom');
+        
+        // Auto-fill the left form AND send a chat message
+        const symptomsInput = document.getElementById('symptomsText');
+        if(symptomsInput) {
+            symptomsInput.value = quickSymptom.charAt(0).toUpperCase() + quickSymptom.slice(1).replace('_', ' ');
+        }
+
         setTimeout(() => {
-            const symptomMessage = `I'm experiencing ${quickSymptom.replace('_', ' ')}`;
+            const symptomMessage = `I'm experiencing ${quickSymptom.replace('_', ' ')}. Can you help?`;
             handleUserMessage(symptomMessage);
         }, 1000);
     }
@@ -43,14 +62,20 @@ function initializeChat() {
 
 function setupEventListeners() {
     const messageInput = document.getElementById('messageInput');
-    const sendBtn = document.getElementById('sendBtn');
+    const sendBtn = document.getElementById('chatSendBtn'); // Matched to new HTML ID
     const saveChatBtn = document.getElementById('saveChatBtn');
+    const symptomForm = document.getElementById('symptomForm'); // The new Left-Side Form
+    const newChatHeaderBtn = document.getElementById('newChatHeaderBtn');
     
-    // Connect the top navbar "New Chat" link directly to the reset engine
+    // Connect the restored header button to your existing reset function
+    if (newChatHeaderBtn) {
+        newChatHeaderBtn.addEventListener('click', startNewChat);
+    }
+    
     const navNewChatLink = document.querySelector('.nav-menu a[href="chat.html"]');
     if (navNewChatLink) {
         navNewChatLink.addEventListener('click', function(e) {
-            e.preventDefault(); // Stop page reload
+            e.preventDefault();
             startNewChat();
         });
     }
@@ -75,12 +100,18 @@ function setupEventListeners() {
     if (saveChatBtn) {
         saveChatBtn.addEventListener('click', saveCurrentChat);
     }
+
+    // LISTENER FOR THE NEW STRICT ANALYSIS FORM
+    if (symptomForm) {
+        symptomForm.addEventListener('submit', handleFormSubmission);
+    }
 }
 
 function sendMessage() {
     const messageInput = document.getElementById('messageInput');
+    if (!messageInput) return;
+
     const message = messageInput.value.trim();
-    
     if (!message || isTyping) return;
     
     messageInput.value = '';
@@ -91,20 +122,71 @@ function sendMessage() {
 
 async function handleUserMessage(message) {
     addMessage('user', message);
-    
     showTypingIndicator();
     
     try {
+        // Uses your existing local AI engine for casual chat
         const aiResponse = await generateAIResponse(message);
         
         hideTypingIndicator();
         addMessage('bot', aiResponse);
         
-        storageUtils.saveCurrentChatSession(currentMessages);
+        if(typeof storageUtils !== 'undefined') storageUtils.saveCurrentChatSession(currentMessages);
     } catch (error) {
         console.error("AI connection error:", error);
         hideTypingIndicator();
-        addMessage('bot', "⚠️ Sorry, my AI brain is currently disconnected. Please make sure the backend server is running.");
+        addMessage('bot', "⚠️ Sorry, my AI brain is currently disconnected.");
+    }
+}
+
+// NEW FUNCTION: Handles the Left-Side Medical Form using Node.js Backend
+async function handleFormSubmission(e) {
+    e.preventDefault();
+    
+    const symptomsInput = document.getElementById('symptomsText');
+    const durationInput = document.getElementById('duration');
+    const severityInput = document.getElementById('severity');
+    const temperatureInput = document.getElementById('temperature');
+
+    const symptomsArray = symptomsInput.value.split(',').map(s => s.trim());
+    
+    // Log the action in the chat window using your existing system
+    const logMsg = `Please run a deep analysis on these symptoms: **${symptomsInput.value}**\nDuration: ${durationInput.value}\nSeverity: ${severityInput.value}\nTemperature: ${temperatureInput.value}`;
+    addMessage('user', logMsg);
+    
+    showTypingIndicator();
+
+    try {
+        const response = await fetch('http://localhost:3000/api/analyze', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                symptoms: symptomsArray, 
+                duration: durationInput.value, 
+                severity: severityInput.value, 
+                temperature: temperatureInput.value 
+            })
+        });
+
+        if (!response.ok) throw new Error("Server error");
+        
+        const data = await response.json();
+        hideTypingIndicator();
+
+        // Format the JSON data into a string that your formatMessageContent can style beautifully
+        let botReply = `**🤖 Strict Medical Assessment:**\n\n`;
+        botReply += `**Potential Conditions (Top 3):**\n`;
+        data.conditions.forEach(c => botReply += `• ${c}\n`);
+        botReply += `\n**Care & Recommendations:**\n`;
+        data.advice.forEach(a => botReply += `• ${a}\n`);
+
+        addMessage('bot', botReply);
+        if(typeof storageUtils !== 'undefined') storageUtils.saveCurrentChatSession(currentMessages);
+
+    } catch (error) {
+        console.error("Backend Error:", error);
+        hideTypingIndicator();
+        addMessage('bot', "⚠️ **Error:** Failed to reach the analysis server. Is your Node.js backend running on port 3000?");
     }
 }
 
@@ -139,16 +221,12 @@ function addMessage(sender, content, skipSave = false) {
 }
 
 function formatMessageContent(content) {
-    // Convert markdown bold (**text**) into clean HTML tags for beautiful AI text presentation
     content = content.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-    
     content = content.replace(/\n/g, '<br>');
-    content = content.replace(/•\s/g, '<span style="color: #2c5aa0;">•</span> ');
-    
+    content = content.replace(/•\s/g, '<span style="color: #2c5aa0; font-weight: bold;">•</span> ');
     content = content.replace(/⚠️/g, '<span style="color: #dc3545;">⚠️</span>');
     content = content.replace(/🚨/g, '<span style="color: #dc3545;">🚨</span>');
     content = content.replace(/💡/g, '<span style="color: #28a745;">💡</span>');
-    
     return content;
 }
 
@@ -165,9 +243,7 @@ function showTypingIndicator() {
         <div class="message-avatar">🤖</div>
         <div class="message-content">
             <div class="typing-dots">
-                <span></span>
-                <span></span>
-                <span></span>
+                <span></span><span></span><span></span>
             </div>
         </div>
     `;
@@ -177,24 +253,11 @@ function showTypingIndicator() {
     
     const style = document.createElement('style');
     style.textContent = `
-        .typing-dots {
-            display: flex;
-            gap: 4px;
-            padding: 10px;
-        }
-        .typing-dots span {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background-color: #2c5aa0;
-            animation: typing 1.4s infinite ease-in-out;
-        }
+        .typing-dots { display: flex; gap: 4px; padding: 10px; }
+        .typing-dots span { width: 8px; height: 8px; border-radius: 50%; background-color: #2c5aa0; animation: typing 1.4s infinite ease-in-out; }
         .typing-dots span:nth-child(1) { animation-delay: -0.32s; }
         .typing-dots span:nth-child(2) { animation-delay: -0.16s; }
-        @keyframes typing {
-            0%, 80%, 100% { transform: scale(0.8); opacity: 0.5; }
-            40% { transform: scale(1); opacity: 1; }
-        }
+        @keyframes typing { 0%, 80%, 100% { transform: scale(0.8); opacity: 0.5; } 40% { transform: scale(1); opacity: 1; } }
     `;
     
     if (!document.getElementById('typingAnimationStyle')) {
@@ -205,27 +268,19 @@ function showTypingIndicator() {
 
 function hideTypingIndicator() {
     const typingIndicator = document.getElementById('typingIndicator');
-    if (typingIndicator) {
-        typingIndicator.remove();
-    }
+    if (typingIndicator) typingIndicator.remove();
     isTyping = false;
 }
 
 function startNewChat() {
-    console.log("Start New Chat Clicked");
-
     if (currentMessages.length > 1) { 
-        if (!confirm('Are you sure you want to start a new chat? Unsaved messages will be lost.')) {
-            return;
-        }
+        if (!confirm('Are you sure you want to start a new chat? Unsaved messages will be lost.')) return;
     }
 
     clearConversationState();
     resetTemperature();
     resetQuestionState();
     resetUserSeverity();
-
-    console.log("Reset Functions Called");
     
     currentChatId = null;
     currentMessages = [];
@@ -233,10 +288,10 @@ function startNewChat() {
     const chatMessages = document.getElementById('chatMessages');
     chatMessages.innerHTML = '';
     
-    const user = authUtils.getCurrentUser();
+    const user = typeof authUtils !== 'undefined' ? authUtils.getCurrentUser() : null;
     addMessage('bot', getWelcomeMessage(user), true);
     
-    storageUtils.clearCurrentChatSession();
+    if(typeof storageUtils !== 'undefined') storageUtils.clearCurrentChatSession();
     updateSaveButtonState();
     
     const messageInput = document.getElementById('messageInput');
@@ -245,28 +300,24 @@ function startNewChat() {
 
 function saveCurrentChat() {
     if (currentMessages.length <= 1) {
-        authUtils.showMessage('No messages to save', 'error');
+        if(typeof authUtils !== 'undefined') authUtils.showMessage('No messages to save', 'error');
         return;
     }
     
-    const chatData = {
-        id: currentChatId,
-        messages: currentMessages,
-        timestamp: new Date().toISOString()
-    };
-    
-    const savedChatId = storageUtils.saveChat(chatData);
+    const chatData = { id: currentChatId, messages: currentMessages, timestamp: new Date().toISOString() };
+    const savedChatId = typeof storageUtils !== 'undefined' ? storageUtils.saveChat(chatData) : null;
     
     if (savedChatId) {
         currentChatId = savedChatId;
-        authUtils.showMessage('Chat saved successfully!', 'success');
+        if(typeof authUtils !== 'undefined') authUtils.showMessage('Chat saved successfully!', 'success');
         updateSaveButtonState();
     } else {
-        authUtils.showMessage('Failed to save chat', 'error');
+        if(typeof authUtils !== 'undefined') authUtils.showMessage('Failed to save chat', 'error');
     }
 }
 
 function loadExistingChat(chatId) {
+    if(typeof storageUtils === 'undefined') return;
     const chat = storageUtils.getChatById(chatId);
     if (!chat) return;
     
@@ -276,25 +327,19 @@ function loadExistingChat(chatId) {
     const chatMessages = document.getElementById('chatMessages');
     chatMessages.innerHTML = '';
     
-    chat.messages.forEach(msg => {
-        addMessage(msg.sender, msg.content, true);
-    });
-    
+    chat.messages.forEach(msg => addMessage(msg.sender, msg.content, true));
     updateSaveButtonState();
 }
 
 function loadChatSession() {
+    if(typeof storageUtils === 'undefined') return;
     const session = storageUtils.getCurrentChatSession();
 
     if (session && session.messages && session.messages.length > 1) {
         currentMessages = [...session.messages];
-
         const chatMessages = document.getElementById('chatMessages');
         chatMessages.innerHTML = '';
-
-        session.messages.forEach(msg => {
-            addMessage(msg.sender, msg.content, true);
-        });
+        session.messages.forEach(msg => addMessage(msg.sender, msg.content, true));
     }
 }
 
@@ -323,15 +368,9 @@ function adjustTextareaHeight(textarea) {
 
 function getWelcomeMessage(user) {
     const timeOfDay = getTimeOfDay();
-    const personalizedGreeting = user ? `Good ${timeOfDay}, ${user.fullName}!` : `Good ${timeOfDay}!`;
+    const personalizedGreeting = user && user.fullName ? `Good ${timeOfDay}, ${user.fullName}!` : `Good ${timeOfDay}!`;
     
-    return `${personalizedGreeting} I'm your AI healthcare assistant. I'm here to help you understand symptoms and provide general health information.\n\n` +
-           `I can assist with:\n` +
-           `• Symptom analysis and general advice\n` +
-           `• Information about common health conditions\n` +
-           `• When to seek medical attention\n` +
-           `• General wellness tips\n\n` +
-           `Please describe your symptoms or health concerns, and I'll do my best to provide helpful information.\n\n` +
+    return `${personalizedGreeting} I'm your AI healthcare assistant. Use the **form on the left** for a strict medical analysis, or type a general question below.\n\n` +
            `⚠️ Remember: This is for informational purposes only and should not replace professional medical advice.`;
 }
 
@@ -343,7 +382,7 @@ function getTimeOfDay() {
 }
 
 setInterval(() => {
-    if (currentMessages.length > 1) {
+    if (currentMessages.length > 1 && typeof storageUtils !== 'undefined') {
         storageUtils.saveCurrentChatSession(currentMessages);
     }
 }, 30000); 
