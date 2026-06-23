@@ -407,3 +407,121 @@ window.chatUtils = {
     saveCurrentChat,
     getCurrentMessages: () => currentMessages
 };
+
+
+
+/*-- 📄 PROFESSIONAL MEDICAL REPORT ENGINE --*/
+
+const downloadPdfBtn = document.getElementById("downloadPdfBtn");
+
+if (downloadPdfBtn) {
+    downloadPdfBtn.addEventListener("click", () => {
+      
+        const currentSymptoms = (JSON.parse(localStorage.getItem('conversationState'))?.symptoms?.join(', ')) || 
+                                document.getElementById("symptomsText")?.value || 
+                                'Not provided';
+                                
+        const currentDuration = JSON.parse(localStorage.getItem('conversationState'))?.duration || 
+                                document.getElementById("duration")?.value || 
+                                'Not provided';
+                                
+        const currentTemp = localStorage.getItem('aiTemperature') || 
+                            document.getElementById("temperature")?.value || 
+                            'Not provided';
+                            
+        const currentSeverity = localStorage.getItem('aiUserSeverity') || 
+                                document.getElementById("severity")?.value || 
+                                'Not provided';
+
+      
+        const chatContainer = document.getElementById("chatMessages");
+        const messages = Array.from(chatContainer.querySelectorAll('.message'));
+
+       
+        const printWorker = document.createElement("div");
+        printWorker.style.padding = "35px";
+        printWorker.style.fontFamily = "'Helvetica Neue', Helvetica, Arial, sans-serif";
+        printWorker.style.color = "#333333";
+        printWorker.style.backgroundColor = "#ffffff";
+
+      
+        let reportHtml = `
+            <div style="border-bottom: 3px solid #28a745; padding-bottom: 12px; margin-bottom: 25px;">
+                <h1 style="margin: 0; color: #28a745; font-size: 24px; letter-spacing: 0.5px;">HEALTHBOT AI TRIAGE REPORT</h1>
+                <p style="margin: 5px 0 0 0; color: #666; font-size: 12px; font-weight: bold;">Generated on: ${new Date().toLocaleString()}</p>
+            </div>
+
+            <h3 style="color: #111; margin-bottom: 12px; font-size: 16px; border-bottom: 1px solid #ddd; padding-bottom: 4px;">🩺 Initial Intake Summary</h3>
+            <div style="background-color: #fdfdfd; border: 1px solid #eaeaea; border-radius: 6px; padding: 15px; margin-bottom: 30px; font-size: 14px;">
+                
+                <div style="padding: 6px 0; border-bottom: 1px solid #f5f5f5;">
+                    <span style="display: inline-block; width: 180px; font-weight: bold; color: #555;">Reported Symptoms:</span>
+                    <span style="display: inline-block; color: #111;">${currentSymptoms}</span>
+                </div>
+                
+                <div style="padding: 6px 0; border-bottom: 1px solid #f5f5f5;">
+                    <span style="display: inline-block; width: 180px; font-weight: bold; color: #555;">Stated Duration:</span>
+                    <span style="display: inline-block; color: #111;">${currentDuration}</span>
+                </div>
+                
+                <div style="padding: 6px 0; border-bottom: 1px solid #f5f5f5;">
+                    <span style="display: inline-block; width: 180px; font-weight: bold; color: #555;">Recorded Temperature:</span>
+                    <span style="display: inline-block; color: #d9534f; font-weight: bold;">${currentTemp}</span>
+                </div>
+                
+                <div style="padding: 6px 0;">
+                    <span style="display: inline-block; width: 180px; font-weight: bold; color: #555;">Triage Severity Level:</span>
+                    <span style="display: inline-block; font-weight: bold; color: #721c24; background-color: #f8d7da; padding: 2px 8px; border-radius: 4px; font-size: 12px; text-transform: uppercase;">${currentSeverity}</span>
+                </div>
+
+            </div>
+
+            <h3 style="color: #111; margin-bottom: 15px; font-size: 16px; border-bottom: 1px solid #ddd; padding-bottom: 4px;">💬 Consultation Transcript</h3>
+            <div style="font-size: 13px; line-height: 1.6;">
+        `;
+
+        
+        messages.forEach(msg => {
+            const isBot = msg.classList.contains('bot-message') || msg.innerText.includes('🤖');
+            const sender = isBot ? "AI HealthBot" : "Patient";
+            const senderColor = isBot ? "#0056b3" : "#28a745";
+            
+           
+            let textContent = msg.querySelector('p') ? msg.querySelector('p').innerText : msg.innerText;
+            textContent = textContent.replace(/🤖 HealthBot:|👤 Patient:|👤/g, '').trim();
+
+         
+            reportHtml += `
+                <div class="message-block-print" style="margin-bottom: 12px; padding: 12px; background-color: ${isBot ? '#f9f9f9' : '#ffffff'}; border-left: 4px solid ${senderColor}; border-radius: 4px;">
+                    <strong style="color: ${senderColor}; font-size: 12px; display: block; margin-bottom: 2px;">${sender.toUpperCase()}</strong>
+                    <div style="color: #222; white-space: pre-line;">${textContent}</div>
+                </div>
+            `;
+        });
+
+     
+        reportHtml += `
+            </div>
+            <div style="margin-top: 50px; padding-top: 15px; border-top: 1px dashed #bbb; text-align: center; font-size: 11px; color: #777; line-height: 1.4;">
+                <p><strong>Regulatory Disclaimer:</strong> This automated screening brief summary document is programmatically assembled using user-reported parameters via an AI triage system interface. It does not constitute formal clinical data, diagnostic authority, or an official medical diagnosis. Please deliver this sheet directly to emergency response staff or a certified medical professional.</p>
+            </div>
+        `;
+
+        printWorker.innerHTML = reportHtml;
+
+      
+        const opt = {
+            margin:       [0.5, 0.5, 0.5, 0.5],
+            filename:     `HealthBot_Medical_Report_${Date.now()}.pdf`,
+            image:        { type: 'jpeg', quality: 0.98 },
+            html2canvas:  { scale: 2, logging: false, useCORS: true },
+            jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' },
+            pagebreak:    { mode: 'css', avoid: '.message-block-print' } // 🌟 FIXED: Allows conversation onto page 1 without chopping individual boxes!
+        };
+
+     
+        html2pdf().set(opt).from(printWorker).save().then(() => {
+            console.log("Pristine structured clinical report saved successfully.");
+        });
+    });
+}
