@@ -28,7 +28,9 @@ Please describe:
     }
 
     if (temperature) {
-        response += `🌡 Temperature: ${temperature}°F\n\n`;
+        // FIX 1: Strip out any letters or symbols from the temperature (e.g., "107 F" becomes "107")
+        const cleanTemp = String(temperature).replace(/[^0-9.]/g, '');
+        response += `🌡 Temperature: ${cleanTemp}°F\n\n`;
     }
 
     // Now we use the AI's Brain for conditions!
@@ -59,7 +61,13 @@ Please describe:
 
     response += `\n⚠️ Risk Level: ${riskLevel}\n`;
 
-    response += `\n❓ ${generateFollowUpQuestion(symptoms, duration, temperature)}`;
+    // FIX 2: Check the follow-up question. If it asks for severity, but we already know it, skip it!
+    const followUp = generateFollowUpQuestion(symptoms, duration, temperature);
+    const isAskingSeverity = followUp.toLowerCase().includes("how severe");
+
+    if (followUp && !(isAskingSeverity && severity !== "LOW")) {
+        response += `\n❓ ${followUp}`;
+    }
 
     response += `\n\n⚠️ This is not a medical diagnosis. Please consult a healthcare professional if symptoms persist or worsen.`;
 

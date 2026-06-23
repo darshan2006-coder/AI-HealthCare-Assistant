@@ -2,7 +2,7 @@ import { analyzeSymptoms } from "./symptomAnalyzer.js";
 import { analyzeSeverity } from "./severityAnalyzer.js";
 import { generateResponse } from "./responseGenerator.js";
 import { detectDuration } from "./durationDetector.js";
-import { getConversationState, updateSymptoms, updateDuration} from "./conversationMemory.js";
+import { getConversationState, updateSymptoms, updateDuration, getMedicalContext } from "./conversationMemory.js";
 import { detectTemperature } from "./temperatureDetector.js";
 import { setTemperature, getTemperature, resetTemperature} from "./followUpState.js";
 import { calculateRisk } from "./riskScorer.js";
@@ -13,9 +13,21 @@ import { setCurrentStep, getCurrentStep } from "./questionState.js";
 import { showWarning } from "./warningModal.js";
 
 export async function generateAIResponse(message) {
+    const medicalContext = getMedicalContext();
     const state = getConversationState();
 
-    // 1. Context Check: Determine if the message is answering a specific triage question
+    if (medicalContext) {
+        if ((!state.symptoms || state.symptoms.length === 0) && medicalContext.symptoms) {
+            const symptomsArray = typeof medicalContext.symptoms === 'string'
+                ? medicalContext.symptoms.split(',').map(s => s.trim())
+                : medicalContext.symptoms;
+            updateSymptoms(symptomsArray);
+        }
+        if (!state.duration && medicalContext.duration) updateDuration(medicalContext.duration);
+        if (!getTemperature() && medicalContext.temperature) setTemperature(medicalContext.temperature);
+        if (!getUserSeverity() && medicalContext.severity) setUserSeverity(medicalContext.severity);
+    }
+
     const duration = detectDuration(message);
     const userSeverity = detectUserSeverity(message);
     const isAnsweringTemperature = getCurrentStep() === "temperature";
@@ -24,30 +36,32 @@ export async function generateAIResponse(message) {
 
     let symptoms = [];
 
-    // 2. Core Pipeline: Only treat as a new symptom if it's not structural triage input or a greeting
     if (!duration && !userSeverity && !isAnsweringTemperature && !ignoreWords.includes(lowerMsg)) {
-        symptoms = analyzeSymptoms(message);
+        // Only parse new symptoms if we don't already have a strict medical context active
+        // This prevents questions like "can I take tylenol?" from being treated as a disease
+        if (!medicalContext) {
+            symptoms = analyzeSymptoms(message);
+        }
     }
 
-    // Check for newly added symptoms
     const newSymptoms = symptoms.filter(
         symptom => !state.symptoms.includes(symptom)
     );
 
-    // Dynamic Reset: If a user drops a heavy multi-symptom emergency string, clear old state pollution
     const hasEmergencyKeywords = lowerMsg.includes("chest pain") || lowerMsg.includes("breathing");
     
+    // 🛡️ THE FIX: Protect the memory! Only reset vitals if there is NO strict medical context.
     if (newSymptoms.length > 0 || hasEmergencyKeywords) {
-        setCurrentStep("symptom");
-        resetUserSeverity();
-        updateDuration(null);
-        resetTemperature();
+        if (!medicalContext) { 
+            setCurrentStep("symptom");
+            resetUserSeverity();
+            updateDuration(null);
+            resetTemperature();
+        }
     }
 
-    // Save data to memory
     if (symptoms.length > 0) {
-        // If it's a critical new emergency string, overwrite the state instead of appending duplicates
-        if (hasEmergencyKeywords) {
+        if (hasEmergencyKeywords && !medicalContext) {
             state.symptoms = []; 
         }
         updateSymptoms(symptoms);
@@ -58,45 +72,31 @@ export async function generateAIResponse(message) {
     const updatedState = getConversationState();
     const severity = getUserSeverity() || analyzeSeverity(updatedState.symptoms);
     
-    // Evaluate Risk Level
     const currentTemp = getTemperature();
     let riskLevel = calculateRisk(updatedState.symptoms, severity, currentTemp);
     
-    // 🚨 CLINICAL SAFETY ALIGNMENT: Force Risk Level to HIGH if severity is HIGH or temperature is critical
-    if (severity === "HIGH" || (currentTemp && parseFloat(currentTemp) >= 103)) {
+    // 🚨 Safety Check ensures Risk Level stays HIGH for 107F
+    if (severity === "HIGH" || severity === "Severe" || (currentTemp && parseFloat(currentTemp) >= 103)) {
         riskLevel = "HIGH";
     }
 
-    // Detect temperature if expected
     let temperature = null;
     if (getCurrentStep() === "temperature") {
         temperature = detectTemperature(message);
     }
 
     if (temperature === "INVALID") {
-        showWarning(
-            "⚠ Invalid Temperature",
-            "Please enter a body temperature between 95°F and 108°F."
-        );
-        return `
-⚠ Invalid Temperature
-Please enter a body temperature between 95°F and 108°F.
-❓ What is your temperature?`;
+        showWarning("⚠ Invalid Temperature", "Please enter a body temperature between 95°F and 108°F.");
+        return `⚠ Invalid Temperature\nPlease enter a body temperature between 95°F and 108°F.\n❓ What is your temperature?`;
     }
 
     if (temperature) {
         setTemperature(temperature);
         if (temperature >= 106) {
-            showWarning(
-                "🚨 Medical Emergency",
-                "A temperature above 106°F can be life-threatening. Please seek emergency medical care immediately."
-            );
+            showWarning("🚨 Medical Emergency", "A temperature above 106°F can be life-threatening. Please seek emergency medical care immediately.");
         }
     }
 
-    // ==========================================
-    // 🧠 AI SERVER FETCH LOGIC
-    // ==========================================
     let aiData = { conditions: [], advice: [] };
     
     if (updatedState.symptoms.length > 0) {
@@ -108,46 +108,25 @@ Please enter a body temperature between 95°F and 108°F.
                     symptoms: updatedState.symptoms,
                     duration: updatedState.duration || "Not specified",
                     severity: severity || "Not specified",
-                    temperature: currentTemp || "Not specified"
+                    temperature: currentTemp || "Not specified",
+                    message: message 
                 })
             });
-            
             aiData = await response.json();
-            
         } catch (error) {
             console.error("AI Server Error:", error);
             aiData.conditions = ["Systemic Evaluation Suggested (Server Offline)"];
-            aiData.advice = [
-                "Ensure your local backend server node is actively running.",
-                "For severe symptoms like chest pain, proceed immediately to an emergency care facility."
-            ];
+            aiData.advice = ["For severe symptoms, proceed immediately to an emergency care facility."];
         }
     }
 
     let finalRiskLevel = riskLevel;
 
-    // Debug logs
-    console.log("Message:", message);
-    console.log("Current State:", updatedState);
-    console.log("Risk Level:", finalRiskLevel);
-
-    const lowerMessage = message.toLowerCase().trim();
-
-    if (lowerMessage.includes("yes")) {
-        return generateExtraGuidance(
-            updatedState.symptoms,
-            severity,
-            currentTemp,
-            finalRiskLevel
-        );
+    if (lowerMsg.includes("yes")) {
+        return generateExtraGuidance(updatedState.symptoms, severity, currentTemp, finalRiskLevel);
     }
-
-    if (lowerMessage.includes("no")) {
-        return `
-✅ Thank you for using HealthBot.
-Take care and monitor your symptoms.
-⚠️ Consult a healthcare professional if symptoms worsen.
-`;
+    if (lowerMsg.includes("no")) {
+        return `✅ Thank you for using HealthBot.\nTake care and monitor your symptoms.\n⚠️ Consult a healthcare professional if symptoms worsen.`;
     }
 
     return generateResponse(

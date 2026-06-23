@@ -1,5 +1,5 @@
 import { generateAIResponse } from './ai/mainAI.js';
-import { clearConversationState } from "./ai/conversationMemory.js";
+import { clearConversationState , setMedicalContext } from "./ai/conversationMemory.js";
 import { resetTemperature } from "./ai/followUpState.js";
 import { resetQuestionState } from "./ai/questionState.js";
 import { resetUserSeverity } from "./ai/severityState.js";
@@ -172,6 +172,19 @@ async function handleFormSubmission(e) {
         
         const data = await response.json();
         hideTypingIndicator();
+
+       
+        if (typeof setMedicalContext === 'function') {
+            setMedicalContext({
+                symptoms: symptomsInput.value,
+                duration: durationInput.value,
+                severity: severityInput.value,
+                temperature: temperatureInput.value,
+                conditions: data.conditions,
+                advice: data.advice
+            });
+        }
+     
 
         // Format the JSON data into a string that your formatMessageContent can style beautifully
         let botReply = `**🤖 Strict Medical Assessment:**\n\n`;

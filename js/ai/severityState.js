@@ -1,7 +1,11 @@
-let userSeverity = null;
+// Load initial severity from localStorage, or default to null
+let userSeverity = localStorage.getItem('aiUserSeverity') || null;
 
 export function setUserSeverity(severity) {
     userSeverity = severity;
+    if (severity !== null) {
+        localStorage.setItem('aiUserSeverity', severity);
+    }
 }
 
 export function getUserSeverity() {
@@ -10,4 +14,5 @@ export function getUserSeverity() {
 
 export function resetUserSeverity() {
     userSeverity = null;
+    localStorage.removeItem('aiUserSeverity');
 }
