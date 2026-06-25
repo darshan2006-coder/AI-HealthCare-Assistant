@@ -1,3 +1,5 @@
+const BACKEND_URL = 'http://localhost:3000'; // 🚀 Paste your live Render URL here after deployment (No trailing slash!)
+
 import { generateAIResponse } from './ai/mainAI.js';
 import { clearConversationState , setMedicalContext } from "./ai/conversationMemory.js";
 import { resetTemperature } from "./ai/followUpState.js";
@@ -157,7 +159,8 @@ async function handleFormSubmission(e) {
     showTypingIndicator();
 
     try {
-        const response = await fetch('http://localhost:3000/api/analyze', {
+        // Updated to use the variable configuration dynamic endpoint
+        const response = await fetch(`${BACKEND_URL}/api/analyze`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ 
@@ -199,7 +202,7 @@ async function handleFormSubmission(e) {
     } catch (error) {
         console.error("Backend Error:", error);
         hideTypingIndicator();
-        addMessage('bot', "⚠️ **Error:** Failed to reach the analysis server. Is your Node.js backend running on port 3000?");
+        addMessage('bot', `⚠️ **Error:** Failed to reach the analysis server. Please verify if your backend deployment at ${BACKEND_URL} is live.`);
     }
 }
 
@@ -499,7 +502,7 @@ if (downloadPdfBtn) {
             `;
         });
 
-     
+      
         reportHtml += `
             </div>
             <div style="margin-top: 50px; padding-top: 15px; border-top: 1px dashed #bbb; text-align: center; font-size: 11px; color: #777; line-height: 1.4;">
@@ -519,7 +522,7 @@ if (downloadPdfBtn) {
             pagebreak:    { mode: 'css', avoid: '.message-block-print' } // 🌟 FIXED: Allows conversation onto page 1 without chopping individual boxes!
         };
 
-     
+      
         html2pdf().set(opt).from(printWorker).save().then(() => {
             console.log("Pristine structured clinical report saved successfully.");
         });

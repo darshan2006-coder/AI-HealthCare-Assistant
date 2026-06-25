@@ -7,8 +7,6 @@ const app = express();
 app.use(cors()); 
 app.use(express.json());
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-
 // Health check route
 app.get('/', (req, res) => {
     res.send('HealthBot API is successfully running!');
@@ -17,6 +15,13 @@ app.get('/', (req, res) => {
 // ROUTE 1: Strict JSON Medical Analysis (For the left-side form)
 app.post('/api/analyze', async (req, res) => {
     try {
+        // Extract user key from headers; fallback to your server's .env key
+        const activeApiKey = req.headers['x-user-api-key'] || process.env.GEMINI_API_KEY;
+        
+        if (!activeApiKey) {
+            return res.status(400).json({ error: "Missing Gemini API key. Please configure it in your settings." });
+        }
+
         const { symptoms, duration, severity, temperature } = req.body;
         
         const prompt = `You are a medical assistant database. 
@@ -29,6 +34,8 @@ app.post('/api/analyze', async (req, res) => {
           "advice": ["Advice 1", "Advice 2", "Advice 3"]
         }`;
 
+        // Initialize Gemini dynamically per request using the active key
+        const genAI = new GoogleGenerativeAI(activeApiKey);
         const model = genAI.getGenerativeModel({ 
             model: "gemini-2.5-flash",
             generationConfig: { responseMimeType: "application/json" }
@@ -40,13 +47,20 @@ app.post('/api/analyze', async (req, res) => {
 
     } catch (error) {
         console.error("Analysis Error:", error);
-        res.status(500).json({ error: "Failed to analyze symptoms." });
+        res.status(500).json({ error: "Failed to analyze symptoms. Verify your API key configuration." });
     }
 });
 
 // ROUTE 2: General Chat (For the bottom text input)
 app.post('/api/chat', async (req, res) => {
     try {
+        // Extract user key from headers; fallback to your server's .env key
+        const activeApiKey = req.headers['x-user-api-key'] || process.env.GEMINI_API_KEY;
+
+        if (!activeApiKey) {
+            return res.status(400).json({ error: "Missing Gemini API key. Please configure it in your settings." });
+        }
+
         const { message } = req.body;
         
         const prompt = `You are a helpful, empathetic AI healthcare assistant. 
@@ -54,6 +68,8 @@ app.post('/api/chat', async (req, res) => {
         Always include a brief disclaimer that you are an AI, not a doctor.
         User question: "${message}"`;
 
+        // Initialize Gemini dynamically per request using the active key
+        const genAI = new GoogleGenerativeAI(activeApiKey);
         const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
         const result = await model.generateContent(prompt);
         
@@ -61,7 +77,7 @@ app.post('/api/chat', async (req, res) => {
 
     } catch (error) {
         console.error("Chat Error:", error);
-        res.status(500).json({ error: "Failed to process chat message." });
+        res.status(500).json({ error: "Failed to process chat message. Verify your API key configuration." });
     }
 });
 
