@@ -1,12 +1,13 @@
 {
   "name": "healthbot-backend",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "HealthBot AI Backend Server",
+  "main": "server.js",
   "scripts": {
+    "start": "node server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": [],
+  "keywords": ["healthcare", "ai", "triage"],
   "author": "",
   "license": "ISC",
   "dependencies": {
