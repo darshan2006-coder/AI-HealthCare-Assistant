@@ -54,7 +54,6 @@ app.post('/api/analyze', async (req, res) => {
 // ROUTE 2: General Chat (For the bottom text input)
 app.post('/api/chat', async (req, res) => {
     try {
-        // Extract user key from headers; fallback to your server's .env key
         const activeApiKey = req.headers['x-user-api-key'] || process.env.GEMINI_API_KEY;
 
         if (!activeApiKey) {
@@ -63,12 +62,22 @@ app.post('/api/chat', async (req, res) => {
 
         const { message } = req.body;
         
-        const prompt = `You are a helpful, empathetic AI healthcare assistant. 
-        Answer the following user question clearly and concisely. 
-        Always include a brief disclaimer that you are an AI, not a doctor.
+        // 🌟 Updated prompt instructing Gemini to return a clean layout that your frontend expects
+        const prompt = `You are an empathetic AI healthcare assistant analyzing user messages.
+        Analyze the user's message and respond strictly using the following layout sections (use the exact headers):
+        
+        🧠 I analyzed your symptoms: [Summarize what they said here]
+        📊 Severity Level: [LOW / MODERATE / SEVERE]
+        📌 Possible conditions (via AI Database):
+        • [Condition 1]
+        • [Condition 2]
+        💡 Recommended care:
+        • [Care instruction 1]
+        • [Care instruction 2]
+        ⚠️ Risk Level: [LOW / MEDIUM / HIGH]
+        
         User question: "${message}"`;
 
-        // Initialize Gemini dynamically per request using the active key
         const genAI = new GoogleGenerativeAI(activeApiKey);
         const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
         const result = await model.generateContent(prompt);
