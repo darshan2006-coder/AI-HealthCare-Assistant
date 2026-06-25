@@ -3,6 +3,9 @@
 > An AI-powered healthcare assistant that performs intelligent symptom assessment, evaluates patient risk, generates Electronic Health Records (EHR), and provides a secure, responsive healthcare experience.
 
 ---
+# 🌐 Live Demo
+
+🚀 Click here to explore the website : https://ai-healthcare-assistant-kkwh.onrender.com
 
 ## 📌 Overview
 
