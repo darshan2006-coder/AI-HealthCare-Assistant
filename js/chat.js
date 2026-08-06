@@ -1,4 +1,4 @@
-const BACKEND_URL = "https://ai-healthcare-assistant-gmak.onrender.com"; // 🚀 Paste your live Render URL here after deployment (No trailing slash!)
+const BACKEND_URL = "https://ai-healthcare-assistant-gmak.onrender.com"; 
 
 import { generateAIResponse } from './ai/mainAI.js';
 import { clearConversationState , setMedicalContext } from "./ai/conversationMemory.js";

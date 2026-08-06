@@ -15,7 +15,6 @@ app.get('/', (req, res) => {
 // ROUTE 1: Strict JSON Medical Analysis (For the left-side form)
 app.post('/api/analyze', async (req, res) => {
     try {
-        // Extract user key from headers; fallback to your server's .env key
         const activeApiKey = req.headers['x-user-api-key'] || process.env.GEMINI_API_KEY;
         
         if (!activeApiKey) {
@@ -27,14 +26,17 @@ app.post('/api/analyze', async (req, res) => {
         const prompt = `You are a medical assistant database. 
         A patient has the following symptoms: ${symptoms.join(', ')}.
         Duration: ${duration}. Severity: ${severity}. Temperature: ${temperature}.
-        Please provide the top 3 possible conditions and a short list of recommended care.
+        Please provide the top 3 possible conditions, a short list of recommended care, and 1 to 3 safe Over-The-Counter (OTC) medications if severity is LOW or MODERATE.
+        If severity is SEVERE or temperature is high, return an empty array for medications.
+        NEVER suggest prescription drugs.
+
         Return the result ONLY as a JSON object in exactly this format:
         {
           "conditions": ["Condition 1", "Condition 2", "Condition 3"],
-          "advice": ["Advice 1", "Advice 2", "Advice 3"]
+          "advice": ["Advice 1", "Advice 2", "Advice 3"],
+          "medications": ["OTC Med 1", "OTC Med 2"]
         }`;
 
-        // Initialize Gemini dynamically per request using the active key
         const genAI = new GoogleGenerativeAI(activeApiKey);
         const model = genAI.getGenerativeModel({ 
             model: "gemini-2.5-flash",
@@ -62,32 +64,47 @@ app.post('/api/chat', async (req, res) => {
 
         const { message } = req.body;
         
-        // We instruct Gemini to return data in rigid JSON format so parsing never fails
         const prompt = `You are an AI healthcare assistant analyzing user messages.
-        Analyze the user's message and respond STRICTLY in JSON format. Do not include markdown code blocks (like \`\`\`json).
+        Analyze the user's message and respond STRICTLY in JSON format. Do not include markdown code blocks.
         
-        Use this exact structure:
+        Medication Rules:
+        - If severity is LOW or MODERATE, suggest 1 to 3 safe Over-The-Counter (OTC) medications (e.g., Artificial Tears, Ibuprofen, Antihistamines).
+        - If severity is SEVERE or risk is HIGH, return an empty array [] for medications.
+        - NEVER recommend prescription medications.
+
+        Use this exact JSON structure:
         {
           "summary": "Brief summary of user input",
           "severity": "LOW, MODERATE, or SEVERE",
           "conditions": ["Condition 1", "Condition 2"],
           "care": ["Care instruction 1", "Care instruction 2"],
+          "medications": ["OTC Med 1", "OTC Med 2"],
           "risk": "LOW, MEDIUM, or HIGH"
         }
         
         User input: "${message}"`;
 
         const genAI = new GoogleGenerativeAI(activeApiKey);
-        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
-        const result = await model.generateContent(prompt);
+        const model = genAI.getGenerativeModel({ 
+            model: "gemini-2.5-flash",
+            generationConfig: { responseMimeType: "application/json" }
+        });
         
+        const result = await model.generateContent(prompt);
         const aiResponseText = result.response.text().trim();
         
-        // Clean out any accidental markdown styling if Gemini includes it
         const cleanJsonString = aiResponseText.replace(/^```json\s*|```$/g, '');
         const parsedData = JSON.parse(cleanJsonString);
 
-        // Map the structured data directly into the exact layout your frontend string expectations need
+        // Defensive check for medications array
+        const meds = Array.isArray(parsedData.medications) ? parsedData.medications : [];
+        let medicationSection = '';
+
+        if (meds.length > 0) {
+            medicationSection = `\n\n💊 Suggested OTC Medications:\n${meds.map(m => `• ${m}`).join('\n')}\n⚠️ Disclaimer: Consult a pharmacist or doctor before taking any medication.`;
+        }
+
+        // Map data directly into the frontend chat output format
         const structuredReply = `🧠 I analyzed your symptoms: ${parsedData.summary}
 
 📊 Severity Level: ${parsedData.severity}
@@ -96,7 +113,7 @@ app.post('/api/chat', async (req, res) => {
 ${parsedData.conditions.map(c => `• ${c}`).join('\n')}
 
 💡 Recommended care:
-${parsedData.care.map(i => `• ${i}`).join('\n')}
+${parsedData.care.map(i => `• ${i}`).join('\n')}${medicationSection}
 
 ⚠️ Risk Level: ${parsedData.risk}`;
 
@@ -104,7 +121,6 @@ ${parsedData.care.map(i => `• ${i}`).join('\n')}
 
     } catch (error) {
         console.error("Chat Error:", error);
-        // Fallback response just in case JSON parsing hits an issue
         res.json({ 
             reply: `🧠 I analyzed your symptoms: Unable to process details cleanly.\n\n📊 Severity Level: MODERATE\n\n📌 Possible conditions (via AI Database):\n• Evaluation ongoing\n\n💡 Recommended care:\n• Monitor your health and seek advice.\n\n⚠️ Risk Level: LOW` 
         });
