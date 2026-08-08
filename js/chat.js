@@ -114,11 +114,11 @@ function setupEventListeners() {
         symptomForm.addEventListener('submit', handleFormSubmission);
     }
 
-    // --- NEW: HOSPITAL GEOLOCATION LISTENER ---
-    const chatMessagesContainer = document.getElementById('chatMessages');
+  const chatMessagesContainer = document.getElementById('chatMessages');
     if (chatMessagesContainer) {
         chatMessagesContainer.addEventListener('click', function(e) {
-            // Check if the clicked element is our dynamically injected hospital button
+            
+            // --- 1. HOSPITAL GEOLOCATION LISTENER ---
             if (e.target && e.target.classList.contains('find-hospitals-btn')) {
                 const btn = e.target;
                 
@@ -145,6 +145,33 @@ function setupEventListeners() {
                 } else {
                     alert("Geolocation is not supported by your browser.");
                 }
+            }
+
+            // --- 2. NEW: APPOINTMENT BOOKING LISTENER ---
+            if (e.target && e.target.classList.contains('book-appt-btn')) {
+                const btn = e.target;
+                const widgetContainer = btn.parentElement;
+                
+                // Find the date and time inputs inside this specific widget
+                const dateInput = widgetContainer.querySelector('.appt-date').value;
+                const timeInput = widgetContainer.querySelector('.appt-time').value;
+
+                if (!dateInput || !timeInput) {
+                    alert("⚠️ Please select both a Date and a Time for your appointment.");
+                    return;
+                }
+
+                // Simulate saving to a database (we will build the real backend for this later!)
+                btn.innerText = "⏳ Booking...";
+                btn.style.backgroundColor = "#6c757d"; // Gray out button
+                
+                setTimeout(() => {
+                    widgetContainer.innerHTML = `<div style="color: #28a745; font-weight: bold; padding: 10px; text-align: center;">
+                        ✅ Appointment Confirmed!<br>
+                        <span style="color: #555; font-weight: normal;">Date: ${dateInput} | Time: ${timeInput}</span><br>
+                        <span style="font-size: 0.9em; color: #777; display: block; margin-top: 5px;">A confirmation email has been sent.</span>
+                    </div>`;
+                }, 1500); // Fake a 1.5 second loading time so it looks professional
             }
         });
     }
@@ -175,6 +202,26 @@ async function handleUserMessage(message) {
             aiResponse += `\n\n🚨 **High Risk Detected:** We strongly recommend visiting a medical facility immediately.\n<button class="find-hospitals-btn" style="padding: 10px 15px; background-color: #dc3545; color: white; border: none; border-radius: 5px; cursor: pointer; margin-top: 10px; font-weight: bold; font-family: inherit; transition: 0.2s;">🏥 Find Nearby Hospitals</button>`;
         }
         
+        // --- NEW: MODERATE RISK APPOINTMENT WIDGET ---
+        else if (aiResponse.includes("Risk Level: MEDIUM") || aiResponse.includes("Severity Level: MODERATE")) {
+            // Get tomorrow's date to set as the minimum booking date
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            const minDate = tomorrow.toISOString().split('T')[0];
+
+            aiResponse += `\n\n👨‍⚕️ **Follow-up Recommended:** Would you like to consult with a doctor about these symptoms?
+            <div style="background-color: #f8f9fa; padding: 15px; border-radius: 8px; margin-top: 10px; border: 1px solid #dee2e6;">
+                <input type="date" class="appt-date" min="${minDate}" style="padding: 8px; border: 1px solid #ccc; border-radius: 4px; margin-right: 5px; cursor: pointer;">
+                <select class="appt-time" style="padding: 8px; border: 1px solid #ccc; border-radius: 4px; margin-right: 5px; cursor: pointer;">
+                    <option value="" disabled selected>Select Time</option>
+                    <option value="10:00 AM">10:00 AM</option>
+                    <option value="1:00 PM">1:00 PM</option>
+                    <option value="4:30 PM">4:30 PM</option>
+                </select>
+                <button class="book-appt-btn" style="padding: 8px 15px; background-color: #2c5aa0; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">Book Slot</button>
+            </div>`;
+        }
+
         hideTypingIndicator();
         addMessage('bot', aiResponse);
         
@@ -221,7 +268,6 @@ async function handleFormSubmission(e) {
         const data = await response.json();
         hideTypingIndicator();
 
-       
         if (typeof setMedicalContext === 'function') {
             setMedicalContext({
                 symptoms: symptomsInput.value,
@@ -232,7 +278,6 @@ async function handleFormSubmission(e) {
                 advice: data.advice
             });
         }
-     
 
         // Format the JSON data into a string that your formatMessageContent can style beautifully
         let botReply = `**🤖 Strict Medical Assessment:**\n\n`;
@@ -241,9 +286,27 @@ async function handleFormSubmission(e) {
         botReply += `\n**Care & Recommendations:**\n`;
         data.advice.forEach(a => botReply += `• ${a}\n`);
 
-        // NEW: Check if the user selected 'Severe' from the form dropdown
+        // Check for SEVERE risk
         if (severityInput.value.toUpperCase() === 'SEVERE') {
             botReply += `\n\n🚨 **High Risk Detected:** We strongly recommend visiting a medical facility immediately.\n<button class="find-hospitals-btn" style="padding: 10px 15px; background-color: #dc3545; color: white; border: none; border-radius: 5px; cursor: pointer; margin-top: 10px; font-weight: bold; font-family: inherit; transition: 0.2s;">🏥 Find Nearby Hospitals</button>`;
+        }
+        // NEW: Check for MODERATE risk to show booking widget
+        else if (severityInput.value.toUpperCase() === 'MODERATE') {
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            const minDate = tomorrow.toISOString().split('T')[0];
+
+            botReply += `\n\n👨‍⚕️ **Follow-up Recommended:** Would you like to consult with a doctor about these symptoms?
+            <div style="background-color: #f8f9fa; padding: 15px; border-radius: 8px; margin-top: 10px; border: 1px solid #dee2e6;">
+                <input type="date" class="appt-date" min="${minDate}" style="padding: 8px; border: 1px solid #ccc; border-radius: 4px; margin-right: 5px; cursor: pointer;">
+                <select class="appt-time" style="padding: 8px; border: 1px solid #ccc; border-radius: 4px; margin-right: 5px; cursor: pointer;">
+                    <option value="" disabled selected>Select Time</option>
+                    <option value="10:00 AM">10:00 AM</option>
+                    <option value="1:00 PM">1:00 PM</option>
+                    <option value="4:30 PM">4:30 PM</option>
+                </select>
+                <button class="book-appt-btn" style="padding: 8px 15px; background-color: #2c5aa0; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">Book Slot</button>
+            </div>`;
         }
 
         addMessage('bot', botReply);
@@ -254,10 +317,7 @@ async function handleFormSubmission(e) {
         hideTypingIndicator();
         addMessage('bot', `⚠️ **Error:** Failed to reach the analysis server. Please verify if your backend deployment at ${BACKEND_URL} is live.`);
     }
-
-    
 }
-
 
 function addMessage(sender, content, skipSave = false) {
     const chatMessages = document.getElementById('chatMessages');
