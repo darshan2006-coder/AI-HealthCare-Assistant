@@ -109,6 +109,47 @@ function setupEventListeners() {
     }
 }
 
+// LISTENER FOR THE NEW STRICT ANALYSIS FORM
+    if (symptomForm) {
+        symptomForm.addEventListener('submit', handleFormSubmission);
+    }
+
+    // --- NEW: HOSPITAL GEOLOCATION LISTENER ---
+    const chatMessagesContainer = document.getElementById('chatMessages');
+    if (chatMessagesContainer) {
+        chatMessagesContainer.addEventListener('click', function(e) {
+            // Check if the clicked element is our dynamically injected hospital button
+            if (e.target && e.target.classList.contains('find-hospitals-btn')) {
+                const btn = e.target;
+                
+                if (navigator.geolocation) {
+                    btn.innerText = "📍 Locating...";
+                    
+                    navigator.geolocation.getCurrentPosition(
+                        (position) => {
+                            const lat = position.coords.latitude;
+                            const lng = position.coords.longitude;
+                            
+                            // Open Google Maps securely in a new tab
+                            const mapsUrl = `https://www.google.com/maps/search/hospitals/@${lat},${lng},14z`;
+                            window.open(mapsUrl, '_blank');
+                            
+                            btn.innerText = "🏥 Map Opened!";
+                        },
+                        (error) => {
+                            console.error("Location error:", error);
+                            alert("Please allow location access in your browser to find nearby hospitals.");
+                            btn.innerText = "🏥 Find Nearby Hospitals";
+                        }
+                    );
+                } else {
+                    alert("Geolocation is not supported by your browser.");
+                }
+            }
+        });
+    }
+
+
 function sendMessage() {
     const messageInput = document.getElementById('messageInput');
     if (!messageInput) return;
@@ -127,8 +168,12 @@ async function handleUserMessage(message) {
     showTypingIndicator();
     
     try {
-        // Uses your existing local AI engine for casual chat
-        const aiResponse = await generateAIResponse(message);
+        let aiResponse = await generateAIResponse(message);
+        
+        // NEW: Check for high risk to trigger hospital search
+        if (aiResponse.includes("Risk Level: HIGH") || aiResponse.includes("Severity Level: SEVERE")) {
+            aiResponse += `\n\n🚨 **High Risk Detected:** We strongly recommend visiting a medical facility immediately.\n<button class="find-hospitals-btn" style="padding: 10px 15px; background-color: #dc3545; color: white; border: none; border-radius: 5px; cursor: pointer; margin-top: 10px; font-weight: bold; font-family: inherit; transition: 0.2s;">🏥 Find Nearby Hospitals</button>`;
+        }
         
         hideTypingIndicator();
         addMessage('bot', aiResponse);
@@ -196,6 +241,11 @@ async function handleFormSubmission(e) {
         botReply += `\n**Care & Recommendations:**\n`;
         data.advice.forEach(a => botReply += `• ${a}\n`);
 
+        // NEW: Check if the user selected 'Severe' from the form dropdown
+        if (severityInput.value.toUpperCase() === 'SEVERE') {
+            botReply += `\n\n🚨 **High Risk Detected:** We strongly recommend visiting a medical facility immediately.\n<button class="find-hospitals-btn" style="padding: 10px 15px; background-color: #dc3545; color: white; border: none; border-radius: 5px; cursor: pointer; margin-top: 10px; font-weight: bold; font-family: inherit; transition: 0.2s;">🏥 Find Nearby Hospitals</button>`;
+        }
+
         addMessage('bot', botReply);
         if(typeof storageUtils !== 'undefined') storageUtils.saveCurrentChatSession(currentMessages);
 
@@ -204,7 +254,10 @@ async function handleFormSubmission(e) {
         hideTypingIndicator();
         addMessage('bot', `⚠️ **Error:** Failed to reach the analysis server. Please verify if your backend deployment at ${BACKEND_URL} is live.`);
     }
+
+    
 }
+
 
 function addMessage(sender, content, skipSave = false) {
     const chatMessages = document.getElementById('chatMessages');
