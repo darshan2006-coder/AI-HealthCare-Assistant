@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 require('dotenv').config();
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 
@@ -7,8 +8,11 @@ const app = express();
 app.use(cors()); 
 app.use(express.json());
 
+// Serve static frontend files (HTML, CSS, JS) from the root project folder
+app.use(express.static(path.join(__dirname, '..')));
+
 // Health check route
-app.get('/', (req, res) => {
+app.get('/api/health', (req, res) => {
     res.send('HealthBot API is successfully running!');
 });
 
@@ -53,7 +57,7 @@ app.post('/api/analyze', async (req, res) => {
     }
 });
 
-// ROUTE 2: General Chat (For the bottom text input)
+// ROUTE 2: General Chat (For the bottom text input with language support)
 app.post('/api/chat', async (req, res) => {
     try {
         const activeApiKey = req.headers['x-user-api-key'] || process.env.GEMINI_API_KEY;
@@ -62,17 +66,27 @@ app.post('/api/chat', async (req, res) => {
             return res.status(400).json({ error: "Missing Gemini API key. Please configure it in your settings." });
         }
 
-        const { message } = req.body;
+        const { message, language = 'en' } = req.body;
+
+        const languageNames = {
+            'hi': 'Hindi (हिंदी)',
+            'kn': 'Kannada (ಕನ್ನಡ)',
+            'ml': 'Malayalam (മലയാളം)',
+            'en': 'English'
+        };
+
+        const targetLangName = languageNames[language] || 'English';
         
         const prompt = `You are an AI healthcare assistant analyzing user messages.
+        IMPORTANT: All text in your JSON values MUST be written entirely in ${targetLangName}.
         Analyze the user's message and respond STRICTLY in JSON format. Do not include markdown code blocks.
         
         Medication Rules:
-        - If severity is LOW or MODERATE, suggest 1 to 3 safe Over-The-Counter (OTC) medications (e.g., Artificial Tears, Ibuprofen, Antihistamines).
+        - If severity is LOW or MODERATE, suggest 1 to 3 safe Over-The-Counter (OTC) medications.
         - If severity is SEVERE or risk is HIGH, return an empty array [] for medications.
         - NEVER recommend prescription medications.
 
-        Use this exact JSON structure:
+        Use this exact JSON structure (translate values into ${targetLangName}):
         {
           "summary": "Brief summary of user input",
           "severity": "LOW, MODERATE, or SEVERE",
@@ -96,7 +110,6 @@ app.post('/api/chat', async (req, res) => {
         const cleanJsonString = aiResponseText.replace(/^```json\s*|```$/g, '');
         const parsedData = JSON.parse(cleanJsonString);
 
-        // Defensive check for medications array
         const meds = Array.isArray(parsedData.medications) ? parsedData.medications : [];
         let medicationSection = '';
 
@@ -104,7 +117,6 @@ app.post('/api/chat', async (req, res) => {
             medicationSection = `\n\n💊 Suggested OTC Medications:\n${meds.map(m => `• ${m}`).join('\n')}\n⚠️ Disclaimer: Consult a pharmacist or doctor before taking any medication.`;
         }
 
-        // Map data directly into the frontend chat output format
         const structuredReply = `🧠 I analyzed your symptoms: ${parsedData.summary}
 
 📊 Severity Level: ${parsedData.severity}
