@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - HealthBot</title>
+    <title data-i18n="homePageTitle">Dashboard - HealthBot</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="dark-theme.css">
     <link rel="stylesheet" href="responsive.css">
@@ -14,71 +14,65 @@
             <h2>HealthBot</h2>
         </div>
         <div class="nav-menu">
-            <a href="home.html" class="nav-link active">Home</a>
-            <a href="chat.html" class="nav-link">New Chat</a>
-            <a href="history.html" class="nav-link">Chat History</a>
-            <a href="about.html" class="nav-link">About</a>
+            <a href="home.html" class="nav-link active" data-i18n="navHome">Home</a>
+            <a href="chat.html" class="nav-link" data-i18n="navNewChat">New Chat</a>
+            <a href="history.html" class="nav-link" data-i18n="navHistory">Chat History</a>
+            <a href="about.html" class="nav-link" data-i18n="navAbout">About</a>
             <button id="themeToggle" class="theme-btn">🌙</button>
-            <button id="logoutBtn" class="logout-btn">Logout</button>
+            <!-- Language Selector -->
+            <div class="language-picker">
+                <select id="languageSelect" style="padding: 6px 12px; border-radius: 5px; border: 1px solid #ccc; font-family: inherit; cursor: pointer;">
+                    <option value="en">English</option>
+                    <option value="hi">हिन्दी (Hindi)</option>
+                    <option value="ta">தமிழ் (Tamil)</option>
+                    <option value="ml">മലയാളം (Malayalam)</option>
+                    <option value="te">తెలుగు (Telugu)</option>
+                    <option value="kn">ಕನ್ನಡ (Kannada)</option>
+                </select>
+            </div>
+            <button id="logoutBtn" class="logout-btn" data-i18n="navLogout">Logout</button>
         </div>
     </nav>
     
     <div class="container">
         <div class="dashboard">
             <div class="welcome-section">
-                <h1>Welcome, <span id="userName">User</span></h1>
-                <p>How can I help you with your health today?</p>
+                <h1><span data-i18n="welcomeText">Welcome</span>, <span id="userName">User</span></h1>
+                <p data-i18n="welcomeSub">How can I help you with your health today?</p>
             </div>
             
             <div class="dashboard-cards">
                 <div class="card">
                     <div class="card-icon">💬</div>
-                    <h3>Start New Chat</h3>
-                    <p>Begin a conversation with our AI healthcare assistant</p>
-                    <a href="#" id="homeStartChatBtn" class="btn-secondary">Start Chat</a>
+                    <h3 data-i18n="card1Title">Start New Chat</h3>
+                    <p data-i18n="card1Desc">Begin a conversation with our AI healthcare assistant</p>
+                    <a href="#" id="homeStartChatBtn" class="btn-secondary" data-i18n="card1Btn">Start Chat</a>
                 </div>
                 
                 <div class="card">
                     <div class="card-icon">📋</div>
-                    <h3>Chat History</h3>
-                    <p>View your previous conversations and health consultations</p>
-                    <a href="history.html" class="btn-secondary">View History</a>
+                    <h3 data-i18n="card2Title">Chat History</h3>
+                    <p data-i18n="card2Desc">View your previous conversations and health consultations</p>
+                    <a href="history.html" class="btn-secondary" data-i18n="card2Btn">View History</a>
                 </div>
                 
                 <div class="card">
                     <div class="card-icon">ℹ️</div>
-                    <h3>About HealthBot</h3>
-                    <p>Learn more about our AI healthcare assistant</p>
-                    <a href="about.html" class="btn-secondary">Learn More</a>
+                    <h3 data-i18n="card3Title">About HealthBot</h3>
+                    <p data-i18n="card3Desc">Learn more about our AI healthcare assistant</p>
+                    <a href="about.html" class="btn-secondary" data-i18n="card3Btn">Learn More</a>
                 </div>
             </div>
             
             <div class="quick-symptoms">
-                <h3>Quick Symptom Check</h3>
+                <h3 data-i18n="quickSymptomTitle">Quick Symptom Check</h3>
                 <div class="symptom-buttons">
-                    <button class="symptom-btn" data-symptom="fever">Fever</button>
-                    <button class="symptom-btn" data-symptom="headache">Headache</button>
-                    <button class="symptom-btn" data-symptom="cough">Cough</button>
-                    <button class="symptom-btn" data-symptom="fatigue">Fatigue</button>
-                    <button class="symptom-btn" data-symptom="nausea">Nausea</button>
-                    <button class="symptom-btn" data-symptom="chest_pain">Chest Pain</button>
-                    <button class="symptom-btn" data-symptom="itching">Itching</button>
-                    <button class="symptom-btn" data-symptom="skin_rash">Skin Rash</button>
-                    <button class="symptom-btn" data-symptom="continuous_sneezing">Continuous Sneezing</button>
-                    <button class="symptom-btn" data-symptom="shivering">Shivering</button>
-                    <button class="symptom-btn" data-symptom="chills">Chills</button>
-                    <button class="symptom-btn" data-symptom="vomiting">Vomiting</button>
-                    <button class="symptom-btn" data-symptom="abdominal_pain">Abdominal Pain</button>
-                    <button class="symptom-btn" data-symptom="runny_nose">Runny Nose</button>
-                    <button class="symptom-btn" data-symptom="congestion">Congestion</button>
-                    <button class="symptom-btn" data-symptom="knee_pain">Knee Pain</button>
-                    <button class="symptom-btn" data-symptom="muscle_weakness">Muscle Weakness</button>
-                    <button class="symptom-btn" data-symptom="depression">Depression</button>
-                    <button class="symptom-btn" data-symptom="loss_of_balance">Loss of Balance</button>
-                    <button class="symptom-btn" data-symptom="irritability">Irritability</button>
-                    <button class="symptom-btn" data-symptom="Stomach pain">Stomach Pain</button>
-                    <button class="symptom-btn" data-symptom="Eye irritation ">Eye Irritation</button>
-                    <button class="symptom-btn" data-symptom="Cold">Cold</button>
+                    <button class="symptom-btn" data-symptom="fever" data-i18n="sympFever">Fever</button>
+                    <button class="symptom-btn" data-symptom="headache" data-i18n="sympHeadache">Headache</button>
+                    <button class="symptom-btn" data-symptom="cough" data-i18n="sympCough">Cough</button>
+                    <button class="symptom-btn" data-symptom="fatigue" data-i18n="sympFatigue">Fatigue</button>
+                    <button class="symptom-btn" data-symptom="nausea" data-i18n="sympNausea">Nausea</button>
+                    <button class="symptom-btn" data-symptom="chest_pain" data-i18n="sympChest">Chest Pain</button>
                 </div>
             </div>
         </div>
@@ -87,6 +81,10 @@
     <script src="auth.js"></script>
     <script src="theme.js"></script>
     <script src="storage.js"></script>
+    
+    <!-- NEW: Include the translation logic -->
+    <script src="translations.js"></script>
+    
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const user = JSON.parse(localStorage.getItem('currentUser'));
@@ -94,12 +92,11 @@
                 document.getElementById('userName').textContent = user.fullName;
             }
             
-            // UPDATED: Listen for the Start Chat card click and set the flag
             const homeStartChatBtn = document.getElementById('homeStartChatBtn');
             if(homeStartChatBtn) {
                 homeStartChatBtn.addEventListener('click', function(e) {
                     e.preventDefault();
-                    localStorage.setItem('forceNewChat', 'true'); // <--- The magic signal
+                    localStorage.setItem('forceNewChat', 'true');
                     window.location.href = 'chat.html';
                 });
             }
@@ -113,5 +110,6 @@
             });
         });
     </script>
+
 </body>
 </html>

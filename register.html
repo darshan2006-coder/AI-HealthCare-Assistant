@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Register - HealthBot</title>
+    <title data-i18n="registerPageTitle">Register - HealthBot</title>
     <link rel="icon" href="healthcare chatbot main.png">
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="dark-theme.css">
@@ -14,60 +14,74 @@
         <div class="register-card">
             <div class="header">
                 <img src="healthcare chatbot main.png" alt="HealthBot Logo" style="width: 80px; height: 80px; border-radius: 50%; margin-bottom: 15px; object-fit: cover; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
-                <h1>Create Account</h1>
-                <p>Join HealthBot for personalized healthcare assistance</p>
+                <h1 data-i18n="createAccount">Create Account</h1>
+                <p data-i18n="joinHealthBot">Join HealthBot for personalized healthcare assistance</p>
             </div>
             
             <form id="registerForm" class="auth-form">
                 <div class="form-group">
-                    <label for="fullName">Full Name:</label>
+                    <label for="fullName" data-i18n="fullNameLabel">Full Name:</label>
                     <input type="text" id="fullName" name="fullName" required>
                 </div>
                 
                 <div class="form-group">
-                    <label for="email">Email:</label>
+                    <label for="email" data-i18n="emailLabel">Email:</label>
                     <input type="email" id="email" name="email" required>
                 </div>
                 
                 <div class="form-group">
-                    <label for="age">Age:</label>
+                    <label for="age" data-i18n="ageLabel">Age:</label>
                     <input type="number" id="age" name="age" min="1" max="120" required>
                 </div>
                 
                 <div class="form-group">
-                    <label for="gender">Gender:</label>
+                    <label for="gender" data-i18n="genderLabel">Gender:</label>
                     <select id="gender" name="gender" required>
-                        <option value="">Select Gender</option>
-                        <option value="male">Male</option>
-                        <option value="female">Female</option>
-                        <option value="other">Other</option>
+                        <option value="" data-i18n="selectGender">Select Gender</option>
+                        <option value="male" data-i18n="genderMale">Male</option>
+                        <option value="female" data-i18n="genderFemale">Female</option>
+                        <option value="other" data-i18n="genderOther">Other</option>
                     </select>
                 </div>
                 
                 <div class="form-group">
-                    <label for="password">Password:</label>
+                    <label for="password" data-i18n="passwordLabel">Password:</label>
                     <input type="password" id="password" name="password" required>
                 </div>
                 
                 <div class="form-group">
-                    <label for="confirmPassword">Confirm Password:</label>
+                    <label for="confirmPassword" data-i18n="confirmPasswordLabel">Confirm Password:</label>
                     <input type="password" id="confirmPassword" name="confirmPassword" required>
                 </div>
                 
-                <button type="submit" class="btn-primary">Register</button>
+                <button type="submit" class="btn-primary" data-i18n="registerBtn">Register</button>
                 
                 <div class="form-footer">
-                    <p>Already have an account? <a href="index.html">Login here</a></p>
+                    <p><span data-i18n="alreadyHaveAccount">Already have an account?</span> <a href="index.html" data-i18n="loginHere">Login here</a></p>
                 </div>
             </form>
             
-            <div class="theme-toggle">
-                <button id="themeToggle" class="theme-btn">🌙 Dark Mode</button>
+            <!-- Flex display to align Theme and Language selectors -->
+            <div class="theme-toggle" style="display: flex; justify-content: center; gap: 15px; align-items: center; margin-top: 15px;">
+                <button id="themeToggle" class="theme-btn" data-i18n="themeBtnText">🌙 Dark Mode</button>
+                
+                <!-- Language Selector -->
+                <div class="language-picker">
+                    <select id="languageSelect" style="padding: 6px 12px; border-radius: 5px; border: 1px solid #ccc; font-family: inherit; cursor: pointer; background-color: var(--card-bg, #fff); color: var(--text-color, #333);">
+                        <option value="en">English</option>
+                        <option value="hi">हिन्दी (Hindi)</option>
+                        <option value="ta">தமிழ் (Tamil)</option>
+                        <option value="ml">മലയാളം (Malayalam)</option>
+                        <option value="te">తెలుగు (Telugu)</option>
+                        <option value="kn">ಕನ್ನಡ (Kannada)</option>
+                    </select>
+                </div>
             </div>
         </div>
     </div>
     
     <script src="auth.js"></script>
     <script src="theme.js"></script>
+    <script src="translations.js"></script>
 </body>
 </html>

@@ -11,7 +11,7 @@ let currentMessages = [];
 let isTyping = false;
 
 document.addEventListener('DOMContentLoaded', function() {
-   
+    
     if (localStorage.getItem('forceNewChat') === 'true') {
         localStorage.removeItem('forceNewChat');
         if(typeof storageUtils !== 'undefined') {
@@ -64,9 +64,9 @@ function initializeChat() {
 
 function setupEventListeners() {
     const messageInput = document.getElementById('messageInput');
-    const sendBtn = document.getElementById('chatSendBtn'); // Matched to new HTML ID
+    const sendBtn = document.getElementById('chatSendBtn'); 
     const saveChatBtn = document.getElementById('saveChatBtn');
-    const symptomForm = document.getElementById('symptomForm'); // The new Left-Side Form
+    const symptomForm = document.getElementById('symptomForm'); 
     const newChatHeaderBtn = document.getElementById('newChatHeaderBtn');
     
     // Connect the restored header button to your existing reset function
@@ -109,72 +109,67 @@ function setupEventListeners() {
     }
 }
 
-// LISTENER FOR THE NEW STRICT ANALYSIS FORM
-    if (symptomForm) {
-        symptomForm.addEventListener('submit', handleFormSubmission);
-    }
-
-  const chatMessagesContainer = document.getElementById('chatMessages');
-    if (chatMessagesContainer) {
-        chatMessagesContainer.addEventListener('click', function(e) {
+const chatMessagesContainer = document.getElementById('chatMessages');
+if (chatMessagesContainer) {
+    chatMessagesContainer.addEventListener('click', function(e) {
+        
+        // --- 1. HOSPITAL GEOLOCATION LISTENER ---
+        if (e.target && e.target.classList.contains('find-hospitals-btn')) {
+            const btn = e.target;
             
-            // --- 1. HOSPITAL GEOLOCATION LISTENER ---
-            if (e.target && e.target.classList.contains('find-hospitals-btn')) {
-                const btn = e.target;
+            if (navigator.geolocation) {
+                btn.innerText = "📍 Locating...";
                 
-                if (navigator.geolocation) {
-                    btn.innerText = "📍 Locating...";
-                    
-                    navigator.geolocation.getCurrentPosition(
-                        (position) => {
-                            const lat = position.coords.latitude;
-                            const lng = position.coords.longitude;
-                            
-                            // Open Google Maps securely in a new tab
-                            const mapsUrl = `https://www.google.com/maps/search/hospitals/@${lat},${lng},14z`;
-                            window.open(mapsUrl, '_blank');
-                            
-                            btn.innerText = "🏥 Map Opened!";
-                        },
-                        (error) => {
-                            console.error("Location error:", error);
-                            alert("Please allow location access in your browser to find nearby hospitals.");
-                            btn.innerText = "🏥 Find Nearby Hospitals";
-                        }
-                    );
-                } else {
-                    alert("Geolocation is not supported by your browser.");
-                }
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        const lat = position.coords.latitude;
+                        const lng = position.coords.longitude;
+                        
+                        // Open Google Maps securely in a new tab
+                        const mapsUrl = `https://www.google.com/maps/search/hospitals/@${lat},${lng},14z`;
+                        window.open(mapsUrl, '_blank');
+                        
+                        btn.innerText = "🏥 Map Opened!";
+                    },
+                    (error) => {
+                        console.error("Location error:", error);
+                        alert("Please allow location access in your browser to find nearby hospitals.");
+                        btn.innerText = "🏥 Find Nearby Hospitals";
+                    }
+                );
+            } else {
+                alert("Geolocation is not supported by your browser.");
+            }
+        }
+
+        // --- 2. NEW: APPOINTMENT BOOKING LISTENER ---
+        if (e.target && e.target.classList.contains('book-appt-btn')) {
+            const btn = e.target;
+            const widgetContainer = btn.parentElement;
+            
+            // Find the date and time inputs inside this specific widget
+            const dateInput = widgetContainer.querySelector('.appt-date').value;
+            const timeInput = widgetContainer.querySelector('.appt-time').value;
+
+            if (!dateInput || !timeInput) {
+                alert("⚠️ Please select both a Date and a Time for your appointment.");
+                return;
             }
 
-            // --- 2. NEW: APPOINTMENT BOOKING LISTENER ---
-            if (e.target && e.target.classList.contains('book-appt-btn')) {
-                const btn = e.target;
-                const widgetContainer = btn.parentElement;
-                
-                // Find the date and time inputs inside this specific widget
-                const dateInput = widgetContainer.querySelector('.appt-date').value;
-                const timeInput = widgetContainer.querySelector('.appt-time').value;
-
-                if (!dateInput || !timeInput) {
-                    alert("⚠️ Please select both a Date and a Time for your appointment.");
-                    return;
-                }
-
-                // Simulate saving to a database (we will build the real backend for this later!)
-                btn.innerText = "⏳ Booking...";
-                btn.style.backgroundColor = "#6c757d"; // Gray out button
-                
-                setTimeout(() => {
-                    widgetContainer.innerHTML = `<div style="color: #28a745; font-weight: bold; padding: 10px; text-align: center;">
-                        ✅ Appointment Confirmed!<br>
-                        <span style="color: #555; font-weight: normal;">Date: ${dateInput} | Time: ${timeInput}</span><br>
-                        <span style="font-size: 0.9em; color: #777; display: block; margin-top: 5px;">A confirmation email has been sent.</span>
-                    </div>`;
-                }, 1500); // Fake a 1.5 second loading time so it looks professional
-            }
-        });
-    }
+            // Simulate saving to a database (we will build the real backend for this later!)
+            btn.innerText = "⏳ Booking...";
+            btn.style.backgroundColor = "#6c757d"; // Gray out button
+            
+            setTimeout(() => {
+                widgetContainer.innerHTML = `<div style="color: #28a745; font-weight: bold; padding: 10px; text-align: center;">
+                    ✅ Appointment Confirmed!<br>
+                    <span style="color: #555; font-weight: normal;">Date: ${dateInput} | Time: ${timeInput}</span><br>
+                    <span style="font-size: 0.9em; color: #777; display: block; margin-top: 5px;">A confirmation email has been sent.</span>
+                </div>`;
+            }, 1500); // Fake a 1.5 second loading time so it looks professional
+        }
+    });
+}
 
 
 function sendMessage() {
@@ -496,6 +491,17 @@ function adjustTextareaHeight(textarea) {
 }
 
 function getWelcomeMessage(user) {
+    // We now use the translation system for the initial greeting!
+    if (typeof t === 'function') {
+        if (user && user.fullName) {
+            // Personalize it AND wrap the translated part in a data-i18n span!
+            return `Hello, ${user.fullName}! <br><span data-i18n="chatBotGreeting">${t('chatBotGreeting')}</span>`;
+        }
+        // Wrap the standard greeting in a data-i18n span
+        return `<span data-i18n="chatBotGreeting">${t('chatBotGreeting')}</span>`;
+    }
+    
+    // Fallback just in case translations.js fails to load
     const timeOfDay = getTimeOfDay();
     const personalizedGreeting = user && user.fullName ? `Good ${timeOfDay}, ${user.fullName}!` : `Good ${timeOfDay}!`;
     
@@ -632,7 +638,7 @@ if (downloadPdfBtn) {
             image:        { type: 'jpeg', quality: 0.98 },
             html2canvas:  { scale: 2, logging: false, useCORS: true },
             jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' },
-            pagebreak:    { mode: 'css', avoid: '.message-block-print' } // 🌟 FIXED: Allows conversation onto page 1 without chopping individual boxes!
+            pagebreak:    { mode: 'css', avoid: '.message-block-print' } 
         };
 
       
@@ -640,4 +646,67 @@ if (downloadPdfBtn) {
             console.log("Pristine structured clinical report saved successfully.");
         });
     });
+}
+
+// --- NEW: VOICE CONSULTATION (WEB SPEECH API) ---
+const micBtn = document.getElementById('micBtn');
+const chatInput = document.getElementById('messageInput'); // Ensure this matches your input's ID
+
+// Check if the browser supports the Web Speech API
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+if (SpeechRecognition) {
+    const recognition = new SpeechRecognition();
+    recognition.continuous = false; // Stops automatically when they stop speaking
+    recognition.interimResults = true; // Shows words in real-time as they talk
+
+    let isListening = false;
+
+    micBtn.addEventListener('click', () => {
+        if (isListening) {
+            recognition.stop();
+        } else {
+            recognition.start();
+        }
+    });
+
+    // When the microphone starts listening
+    recognition.onstart = () => {
+        isListening = true;
+        micBtn.innerHTML = "🔴"; // Change icon to a red dot to indicate recording
+        micBtn.style.animation = "pulse 1s infinite"; 
+        chatInput.placeholder = "Listening to your symptoms...";
+    };
+
+    // When the browser translates speech to text
+    recognition.onresult = (event) => {
+        let transcript = '';
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+            transcript += event.results[i][0].transcript;
+        }
+        chatInput.value = transcript; // Put the text into the input box
+    };
+
+    // When the microphone stops
+    recognition.onend = () => {
+        isListening = false;
+        micBtn.innerHTML = "🎤"; // Change back to mic icon
+        micBtn.style.animation = ""; 
+        chatInput.placeholder = "Type your symptoms here...";
+    };
+
+    // Handle errors (like if the user denies microphone access)
+    recognition.onerror = (event) => {
+        console.error("Speech recognition error:", event.error);
+        isListening = false;
+        micBtn.innerHTML = "🎤";
+        chatInput.placeholder = "Type your symptoms here...";
+        if(event.error === 'not-allowed') {
+            alert("Please allow microphone access in your browser to use voice typing.");
+        }
+    };
+} else {
+    // Hide the mic button if the browser is too old or unsupported
+    if(micBtn) micBtn.style.display = 'none';
+    console.warn("Speech Recognition API is not supported in this browser.");
 }

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chat History - HealthBot</title>
+    <title data-i18n="historyPageTitle">Chat History - HealthBot</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="dark-theme.css">
     <link rel="stylesheet" href="responsive.css">
@@ -14,52 +14,67 @@
             <h2>HealthBot</h2>
         </div>
         <div class="nav-menu">
-            <a href="home.html" class="nav-link">Home</a>
-            <a href="chat.html" class="nav-link">New Chat</a>
-            <a href="history.html" class="nav-link active">Chat History</a>
-            <a href="about.html" class="nav-link">About</a>
+            <a href="home.html" class="nav-link" data-i18n="navHome">Home</a>
+            <a href="chat.html" class="nav-link" data-i18n="navNewChat">New Chat</a>
+            <a href="history.html" class="nav-link active" data-i18n="navHistory">Chat History</a>
+            <a href="about.html" class="nav-link" data-i18n="navAbout">About</a>
             <button id="themeToggle" class="theme-btn">🌙</button>
-            <button id="logoutBtn" class="logout-btn">Logout</button>
+
+            <div class="language-picker">
+                <select id="languageSelect" style="padding: 6px 12px; border-radius: 5px; border: 1px solid #ccc; font-family: inherit; cursor: pointer;">
+                    <option value="en">English</option>
+                    <option value="hi">हिन्दी (Hindi)</option>
+                    <option value="ta">தமிழ் (Tamil)</option>
+                    <option value="ml">മലയാളം (Malayalam)</option>
+                    <option value="te">తెలుగు (Telugu)</option>
+                    <option value="kn">ಕನ್ನಡ (Kannada)</option>
+                </select>
+            </div>
+
+            <button id="logoutBtn" class="logout-btn" data-i18n="navLogout">Logout</button>
         </div>
     </nav>
     
     <div class="container">
         <div class="history-container">
             <div class="history-header">
-                <h2>Chat History</h2>
-                <button id="clearAllBtn" class="btn-danger">Clear All</button>
+                <h2 data-i18n="historyHeaderTitle">Chat History</h2>
+                <button id="clearAllBtn" class="btn-danger" data-i18n="clearAllBtn">Clear All</button>
             </div>
             
-            <div class="history-list" id="historyList">
-                </div>
+            <div class="history-list" id="historyList"></div>
             
             <div class="empty-state" id="emptyState" style="display: none;">
                 <div class="empty-icon">📝</div>
-                <h3>No chat history yet</h3>
-                <p>Start a conversation with our AI healthcare assistant to see your chat history here.</p>
-                <a href="chat.html" class="btn-primary">Start New Chat</a>
+                <h3 data-i18n="noHistoryTitle">No chat history yet</h3>
+                <p data-i18n="noHistoryDesc">Start a conversation with our AI healthcare assistant to see your chat history here.</p>
+                <a href="chat.html" class="btn-primary" data-i18n="startNewChatBtn">Start New Chat</a>
             </div>
         </div>
         
         <div class="modal" id="chatModal" style="display: none;">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h3>Chat Details</h3>
+                    <h3 data-i18n="chatDetailsTitle">Chat Details</h3>
                     <button class="modal-close" id="modalClose">&times;</button>
                 </div>
-                <div class="modal-body" id="modalBody">
-                    </div>
+                <div class="modal-body" id="modalBody"></div>
                 <div class="modal-footer">
-                    <button id="deleteChatBtn" class="btn-danger">Delete Chat</button>
-                    <button id="continueChatBtn" class="btn-primary">Continue Chat</button>
+                    <button id="deleteChatBtn" class="btn-danger" data-i18n="deleteChatBtn">Delete Chat</button>
+                    <button id="continueChatBtn" class="btn-primary" data-i18n="continueChatBtn">Continue Chat</button>
                 </div>
             </div>
         </div>
     </div>
     
+    <!-- Scripts -->
     <script src="auth.js"></script>
     <script src="theme.js"></script>
     <script src="storage.js"></script>
+    
+    <!-- Load translations before custom script so it can be accessed inside functions -->
+    <script src="translations.js"></script> 
+    
     <script>
         let currentChatId = null;
         
@@ -72,7 +87,6 @@
             document.getElementById('continueChatBtn').addEventListener('click', continueChat);
         });
         
-        // Formats the text so saved chats look exactly like live chats
         function formatMessageContent(content) {
             content = content.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
             content = content.replace(/\n/g, '<br>');
@@ -97,6 +111,10 @@
                 return;
             }
             
+            // Get current language for dynamic JS text
+            const lang = localStorage.getItem('preferredLanguage') || 'en';
+            const msgText = (window.translations && window.translations[lang] && window.translations[lang].msgCountText) ? window.translations[lang].msgCountText : "messages";
+
             emptyState.style.display = 'none';
             historyList.innerHTML = chats.map(chat => `
                 <div class="history-item" onclick="openChatModal('${chat.id}')">
@@ -106,7 +124,7 @@
                         <small>${new Date(chat.timestamp).toLocaleString()}</small>
                     </div>
                     <div class="history-actions">
-                        <span class="message-count">${chat.messages.length} messages</span>
+                        <span class="message-count">${chat.messages.length} ${msgText}</span>
                     </div>
                 </div>
             `).join('');
@@ -139,22 +157,24 @@
         
         function deleteChat() {
             if (!currentChatId) return;
-            
             storageUtils.deleteChat(currentChatId);
-            
             closeModal();
             loadChatHistory();
         }
         
         function continueChat() {
             if (!currentChatId) return;
-            
             localStorage.setItem('continueChatId', currentChatId);
             window.location.href = 'chat.html';
         }
         
         function clearAllHistory() {
-            if (confirm('Are you sure you want to delete all chat history? This action cannot be undone.')) {
+            const lang = localStorage.getItem('preferredLanguage') || 'en';
+            const confirmMsg = (window.translations && window.translations[lang] && window.translations[lang].confirmClearAll) 
+                ? window.translations[lang].confirmClearAll 
+                : "Are you sure you want to delete all chat history? This action cannot be undone.";
+
+            if (confirm(confirmMsg)) {
                 storageUtils.clearAllChats();
                 loadChatHistory();
             }

@@ -12,6 +12,9 @@ import { generateExtraGuidance } from "./guidanceGenerator.js";
 import { setCurrentStep, getCurrentStep } from "./questionState.js";
 import { showWarning } from "./warningModal.js";
 
+// Helper to use the global translation function safely
+const t = (key) => window.t ? window.t(key) : key;
+
 export async function generateAIResponse(message) {
     const medicalContext = getMedicalContext();
     const state = getConversationState();
@@ -75,7 +78,7 @@ export async function generateAIResponse(message) {
     const currentTemp = getTemperature();
     let riskLevel = calculateRisk(updatedState.symptoms, severity, currentTemp);
     
-    // 🚨 Safety Check ensures Risk Level stays HIGH for 107F
+    // 🚨 Safety Check ensures Risk Level stays HIGH for 103F+
     if (severity === "HIGH" || severity === "Severe" || (currentTemp && parseFloat(currentTemp) >= 103)) {
         riskLevel = "HIGH";
     }
@@ -86,14 +89,14 @@ export async function generateAIResponse(message) {
     }
 
     if (temperature === "INVALID") {
-        showWarning("⚠ Invalid Temperature", "Please enter a body temperature between 95°F and 108°F.");
-        return `⚠ Invalid Temperature\nPlease enter a body temperature between 95°F and 108°F.\n❓ What is your temperature?`;
+        showWarning(t("aiInvalidTempTitle"), t("aiInvalidTempDesc"));
+        return `${t("aiInvalidTempTitle")}\n${t("aiInvalidTempDesc")}\n❓ ${t("aiAskTemp")}`;
     }
 
     if (temperature) {
         setTemperature(temperature);
         if (temperature >= 106) {
-            showWarning("🚨 Medical Emergency", "A temperature above 106°F can be life-threatening. Please seek emergency medical care immediately.");
+            showWarning(t("aiEmergencyTitle"), t("aiEmergencyDesc"));
         }
     }
 
@@ -115,18 +118,19 @@ export async function generateAIResponse(message) {
             aiData = await response.json();
         } catch (error) {
             console.error("AI Server Error:", error);
-            aiData.conditions = ["Systemic Evaluation Suggested (Server Offline)"];
-            aiData.advice = ["For severe symptoms, proceed immediately to an emergency care facility."];
+            aiData.conditions = [t("aiOfflineCond")];
+            aiData.advice = [t("aiOfflineAdv")];
         }
     }
 
     let finalRiskLevel = riskLevel;
 
+    // We can still check English keywords here since the underlying ML engine likely processes English
     if (lowerMsg.includes("yes")) {
         return generateExtraGuidance(updatedState.symptoms, severity, currentTemp, finalRiskLevel);
     }
     if (lowerMsg.includes("no")) {
-        return `✅ Thank you for using HealthBot.\nTake care and monitor your symptoms.\n⚠️ Consult a healthcare professional if symptoms worsen.`;
+        return t("aiFarewell");
     }
 
     return generateResponse(
