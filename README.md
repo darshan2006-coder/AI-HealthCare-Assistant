@@ -5,7 +5,7 @@
 ---
 # 🌐 Live Demo
 
-🚀 Click here to explore the website : https://ai-healthcare-assistant-kkwh.onrender.com
+🚀 Click here to explore the website : https://ai-healthcare-assistant-gmak.onrender.com
 
 ## 📌 Overview
 
