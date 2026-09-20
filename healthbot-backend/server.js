@@ -4,12 +4,31 @@ const path = require('path');
 require('dotenv').config();
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 
+// 🟢 NEW: 1. Import Mongoose and your Schema
+const mongoose = require('mongoose');
+const Consultation = require('./models/Consultation');
+
 const app = express();
 app.use(cors()); 
 app.use(express.json());
 
 // Serve static frontend files (HTML, CSS, JS) from the root project folder
 app.use(express.static(path.join(__dirname, '..')));
+
+// Load main website page on root URL access
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, '..', 'index.html'));
+});
+
+// 🟢 NEW: 2. Connect to MongoDB Atlas
+const MONGODB_URI = process.env.MONGODB_URI;
+if (MONGODB_URI) {
+    mongoose.connect(MONGODB_URI)
+        .then(() => console.log('✅ Connected successfully to MongoDB Atlas'))
+        .catch(err => console.error('❌ MongoDB Connection Error:', err));
+} else {
+    console.warn('⚠️ MONGODB_URI is not set in environment variables.');
+}
 
 // Health check route
 app.get('/api/health', (req, res) => {
@@ -129,6 +148,18 @@ ${parsedData.care.map(i => `• ${i}`).join('\n')}${medicationSection}
 
 ⚠️ Risk Level: ${parsedData.risk}`;
 
+        // 🟢 NEW: 3. Save this interaction to MongoDB Atlas
+        try {
+            await Consultation.create({
+                type: 'chat',
+                userInput: message,
+                aiResponse: parsedData,
+                language: language
+            });
+        } catch (dbErr) {
+            console.error("MongoDB Save Error:", dbErr);
+        }
+
         res.json({ reply: structuredReply });
 
     } catch (error) {
@@ -139,7 +170,17 @@ ${parsedData.care.map(i => `• ${i}`).join('\n')}${medicationSection}
     }
 });
 
+// 🟢 NEW: 4. Route to fetch past consultations (History Endpoint)
+app.get('/api/history', async (req, res) => {
+    try {
+        const history = await Consultation.find().sort({ createdAt: -1 }).limit(20);
+        res.json(history);
+    } catch (error) {
+        res.status(500).json({ error: "Failed to fetch history." });
+    }
+});
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`Server is successfully running on port ${PORT}`);
-}); 
+});
